@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "Flixora",
+    "slug": "flixora",
+    "version": "0.1.0",
+    "orientation": "default",
+    "userInterfaceStyle": "dark",
+    "scheme": "flixora",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.example.flixora"
+    },
+    "android": {
+      "package": "com.example.flixora",
+      "adaptiveIcon": {
+        "backgroundColor": "#090B10"
+      }
+    },
+    "plugins": [
+      [
+        "expo-video",
+        {
+          "supportsPictureInPicture": true,
+          "supportsBackgroundPlayback": false
+        }
+      ],
+      [
+        "expo-secure-store",
+        {
+          "configureAndroidBackup": true
+        }
+      ]
+    ]
+  }
+}

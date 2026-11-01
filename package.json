@@ -1,0 +1,34 @@
+{
+  "name": "flixora",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "api": "node --env-file-if-exists=.env server/index.js",
+    "start": "vite preview --host 0.0.0.0",
+    "test": "node --test server/*.test.js",
+    "typecheck:mobile": "npm --prefix mobile run typecheck",
+    "check": "npm test && npm run build && npm run typecheck:mobile"
+  },
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "lucide-react": "^0.468.0",
+    "hls.js": "^1.6.0",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "express-rate-limit": "^8.1.0",
+    "jose": "^6.1.0",
+    "pg": "^8.16.0",
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "vite": "^7.2.0"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

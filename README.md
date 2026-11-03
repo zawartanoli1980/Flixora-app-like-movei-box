@@ -1,12 +1,24 @@
 # Flixora
 
-Flixora is a full-stack movie and media application foundation with a polished React web demo, an Expo/React Native mobile client, a modular Express API, and a PostgreSQL 16 schema.
+Flixora is a full-stack entertainment application with a polished Tailwind CSS streaming dashboard, an Expo/React Native mobile client, a modular Express API, and a PostgreSQL 16 schema.
+
+## Open the ready-made web app
+
+No setup is required for the standalone demo:
+
+1. Download and extract the ZIP.
+2. Double-click `index.html`.
+3. It automatically opens `Flixora-Open-Me.html`, the complete bundled dashboard.
+
+The standalone file includes the compiled React and Tailwind code, so a local server is not required. Internet access is still needed for demo artwork and public sample video streams.
 
 The downloadable demo is intentionally honest about its boundaries: it uses public sample video and demo catalog metadata. Real movies, DRM, billing, encrypted downloads, and production identity require licensed providers and credentials.
 
 ## What works in the demo
 
-- Responsive home, hero, discovery, search, multi-filter browsing, title details, watchlist, reviews, and community presentation.
+- Responsive dark Tailwind dashboard with a sticky header, cross-content search, scrollable category pills, and a fixed mobile bottom navigation.
+- Auto-rotating featured banners and horizontal rails for movies, live cricket/football, dramas, anime, novels, and vertical shorts.
+- Functional Home, Shorts, Download, Novels, and Profile views with local watchlist, history, and simulated web download progress.
 - Adult and Kids demo profiles with profile-isolated local data, Kids catalog restrictions, and a clearly labelled demo PIN (`1234`).
 - Profile-specific Continue Watching based on saved progress.
 - Video controls for play/pause, ±10 seconds, speed, fullscreen, audio/subtitle/episode selection, and safe source failover.

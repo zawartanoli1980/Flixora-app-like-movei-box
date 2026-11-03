@@ -17,7 +17,10 @@ The downloadable demo is intentionally honest about its boundaries: it uses publ
 ## What works in the demo
 
 - Responsive dark Tailwind dashboard with a sticky header, cross-content search, scrollable category pills, and a fixed mobile bottom navigation.
-- Auto-rotating featured banners and horizontal rails for movies, live cricket/football, dramas, anime, novels, and vertical shorts.
+- Five-second featured carousel, voice and tag search, ranked multi-tab Trending hub, skeleton artwork loaders, and 17 horizontally scrolling regional/category collections.
+- Versioned mock catalog schema with 136 complete records, seasons, episodes, multi-audio/subtitle metadata, quality variants, popularity, views, and TMDB-compatible artwork fields.
+- HLS/HTML5 player with server failover, 4K/1080p/720p quality, speed, audio, subtitles, season/episode selection, Skip Intro, Next Episode, and 10-second progress sync.
+- Vertical snap Shorts feed, interactive novel reader, See All collection modals, Continue Watching, live cricket/football, games, and Kids content.
 - Functional Home, Shorts, Download, Novels, and Profile views with local watchlist, history, and simulated web download progress.
 - Adult and Kids demo profiles with profile-isolated local data, Kids catalog restrictions, and a clearly labelled demo PIN (`1234`).
 - Profile-specific Continue Watching based on saved progress.

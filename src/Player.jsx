@@ -15,6 +15,7 @@ const DEMO_SOURCES = [
   {
     id: 'demo-primary',
     label: 'Demo CDN 1',
+    quality: 'Auto',
     url: 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
     type: 'video/mp4',
     audioLanguages: ['Default'],
@@ -24,6 +25,7 @@ const DEMO_SOURCES = [
   {
     id: 'demo-backup',
     label: 'Demo CDN 2',
+    quality: '720p',
     url: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
     type: 'video/mp4',
     audioLanguages: ['Default'],
@@ -53,6 +55,7 @@ function normalizeSources(candidateSources) {
         ? {
             id: source.id || `source-${index}`,
             label: source.label || `Server ${index + 1}`,
+            quality: source.quality || 'Auto',
             url: source.url,
             type: source.type,
             audioLanguages: Array.isArray(source.audioLanguages) ? source.audioLanguages : [],
@@ -105,12 +108,14 @@ export default function Player({movie, onClose, onProgress, initialProgress = 0}
 
   const episodes = Array.isArray(movie.episodes) ? movie.episodes : [];
   const activeEpisode = episodes[episodeIndex] || null;
+  const availableSeasons = [...new Set(episodes.map(episode => Number(episode.season) || 1))];
   const mediaIdentity = getMediaIdentity(movie, activeEpisode);
   const sources = useMemo(
     () => normalizeSources(activeEpisode?.sources || movie.sources || (movie.streamUrl ? [movie.streamUrl] : [])),
     [activeEpisode, movie],
   );
   const activeSource = sources[sourceIndex] || sources[0];
+  const qualityOptions = [...new Set(sources.map(source => source.quality || 'Auto'))];
   const audioOptions = activeSource?.audioLanguages?.length
     ? [...new Set(activeSource.audioLanguages)]
     : Array.isArray(movie.audioTracks) && movie.audioTracks.length
@@ -271,6 +276,41 @@ export default function Player({movie, onClose, onProgress, initialProgress = 0}
     setSourceIndex(0);
   };
 
+  const chooseSeason = (event) => {
+    const season = Number(event.target.value);
+    const nextIndex = episodes.findIndex(episode => (Number(episode.season) || 1) === season);
+    if (nextIndex < 0 || nextIndex === episodeIndex) return;
+    reportProgress(true);
+    pendingPositionRef.current = 0;
+    lastSavedAtRef.current = 0;
+    setEpisodeIndex(nextIndex);
+    setSourceIndex(0);
+  };
+
+  const chooseQuality = (event) => {
+    const nextIndex = sources.findIndex(source => (source.quality || 'Auto') === event.target.value);
+    if (nextIndex < 0 || nextIndex === sourceIndex) return;
+    pendingPositionRef.current = Number(videoRef.current?.currentTime) || 0;
+    setSourceIndex(nextIndex);
+  };
+
+  const skipIntro = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.currentTime = Math.min(activeEpisode?.introEnd || movie.introEnd || 75, video.duration || 75);
+    setTime(video.currentTime);
+    reportProgress(true);
+  };
+
+  const nextEpisode = () => {
+    if (episodeIndex >= episodes.length - 1) return;
+    reportProgress(true);
+    pendingPositionRef.current = 0;
+    lastSavedAtRef.current = 0;
+    setEpisodeIndex(index => index + 1);
+    setSourceIndex(0);
+  };
+
   const chooseAudio = (event) => {
     const selected = event.target.value;
     setAudioLanguage(selected);
@@ -325,7 +365,7 @@ export default function Player({movie, onClose, onProgress, initialProgress = 0}
         <div className="modal-heading">
           <div>
             <span className="eyebrow">NOW PLAYING · {activeSource?.isDemo ? 'PUBLIC DEMO VIDEO' : 'AUTHORIZED SOURCE'}</span>
-            <h2 id="player-title">{activeEpisode?.title || movie.title}</h2>
+            <h2 id="player-title">{activeEpisode ? `S${activeEpisode.season || 1} E${activeEpisode.number || episodeIndex + 1} · ${activeEpisode.title}` : movie.title}</h2>
           </div>
           <button ref={closeRef} className="icon-button" onClick={onClose} aria-label="Close video player">
             <X aria-hidden="true" />
@@ -354,6 +394,10 @@ export default function Player({movie, onClose, onProgress, initialProgress = 0}
             onError={() => switchToNextSource('The selected source could not be played.')}
           />
           {status && <div className="player-status" role="status">{status}</div>}
+          {!status && <div className="player-actions-overlay">
+            {time < (activeEpisode?.introEnd || movie.introEnd || 75) && <button onClick={skipIntro}>Skip Intro <SkipForward size={15} aria-hidden="true" /></button>}
+            {episodeIndex < episodes.length - 1 && <button onClick={nextEpisode}>Next Episode <SkipForward size={15} aria-hidden="true" /></button>}
+          </div>}
         </div>
         {error && <p className="player-error" role="alert">{error}</p>}
         <div className="player-controls">
@@ -392,11 +436,17 @@ export default function Player({movie, onClose, onProgress, initialProgress = 0}
         </div>
         <div className="player-selectors" aria-label="Playback options">
           <label>
-            Source
+            Server
             <select value={sourceIndex} onChange={chooseSource}>
               {sources.map((source, index) => (
                 <option key={source.id} value={index}>{source.label}</option>
               ))}
+            </select>
+          </label>
+          <label>
+            Quality
+            <select value={activeSource?.quality || 'Auto'} onChange={chooseQuality}>
+              {qualityOptions.map(quality => <option key={quality}>{quality}</option>)}
             </select>
           </label>
           <label>
@@ -412,16 +462,24 @@ export default function Player({movie, onClose, onProgress, initialProgress = 0}
             </select>
           </label>
           {episodes.length > 0 && (
-            <label>
-              Episode
-              <select value={episodeIndex} onChange={chooseEpisode}>
-                {episodes.map((episode, index) => (
-                  <option key={episode.id || index} value={index}>
-                    {episode.number ? `E${episode.number} · ` : ''}{episode.title || `Episode ${index + 1}`}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <>
+              <label>
+                Season
+                <select value={Number(activeEpisode?.season) || 1} onChange={chooseSeason}>
+                  {availableSeasons.map(season => <option key={season} value={season}>Season {season}</option>)}
+                </select>
+              </label>
+              <label>
+                Episode
+                <select value={episodeIndex} onChange={chooseEpisode}>
+                  {episodes.map((episode, index) => (
+                    <option key={episode.id || index} value={index}>
+                      S{episode.season || 1} E{episode.number || index + 1} · {episode.title || `Episode ${index + 1}`}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </>
           )}
         </div>
         <p id="player-description" className="muted">

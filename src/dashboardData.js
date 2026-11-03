@@ -1,89 +1,161 @@
-import {movies} from './catalog';
-
-const sampleSources = [
-  {id: 'fast-cdn', label: 'Fast CDN', url: 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'},
-  {id: 'backup-cdn', label: 'Backup Server', url: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4'},
+const DEMO_STREAMS = [
+  {id: 'cdn-auto', label: 'Fast CDN', quality: 'Auto', type: 'video/mp4', url: 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', audioLanguages: ['English', 'Urdu', 'Hindi'], subtitles: [{language: 'English', label: 'English'}, {language: 'Urdu', label: 'Urdu'}], isDemo: true},
+  {id: 'cdn-4k', label: 'Ultra Server', quality: '4K', type: 'video/mp4', url: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4', audioLanguages: ['English', 'Hindi'], subtitles: [{language: 'English', label: 'English'}], isDemo: true},
+  {id: 'cdn-1080', label: 'Server 2', quality: '1080p', type: 'video/mp4', url: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4', audioLanguages: ['English', 'Urdu'], subtitles: [{language: 'English', label: 'English'}], isDemo: true},
+  {id: 'cdn-720', label: 'Data Saver', quality: '720p', type: 'video/mp4', url: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4', audioLanguages: ['English'], subtitles: [{language: 'English', label: 'English'}], isDemo: true},
 ];
 
-const byId = id => movies.find(item => item.id === id);
+const POSTERS = [
+  '1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg', 'gEU2QniE6E77NI6lCU6MxlNBvIx2.jpg', '7O4iVfOMQmdCSxhOg1WnzG1AgYT.jpg',
+  '74xTEgt7R36Fpooo50r9T25onhq.jpg', '8Vt6mWEReuy4Of61Lnj5Xj704m8.jpg', 'ptpr0kGAckfQkJeJIt8st5dglvd.jpg',
+  'uKvVjHNqB5VmOrdxqAt2F7J78ED.jpg', 'x2FJsf1ElAgr63Y3PNPtJrcmpoe.jpg', '62HCnUTziyWcpDaBO2i1DX17ljH.jpg',
+  'wRSnArnQBmeUYb5GWDU595bGsBr.jpg', '39wmItIWsg5sZMyRUHLkWBcuVCM.jpg', '9p4pNoGcuyCf3acAJrRzTKa7u7P.jpg',
+  'vIeu8WysZrTSFb2uhPViKjX9EcC.jpg', 'q719jXXEzOoYaps6babgKnONONX.jpg', 'cMD9Ygz11zjJzAovURpO75Qg7rT.jpg',
+  'udDclJoHjfjb8Ekgsd4FDteOkCU.jpg', '2CAL2433ZeIihfX1Hb2139CX0pW.jpg', 'rktDFPbfHfUbArZ6OOOKsXcv0Bm.jpg',
+  '6oom5QYQ2yQTMJIbnvbkBL9cHo6.jpg', 'pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg', 'q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg',
+  'iB64vpL3dIObOtMZgX3RqdVdQDc.jpg', 'zqkmTXzjkAgXmEWLRsY4UpTWCeo.jpg', 'd5NXSklXo0qyIYkgV94XAgMIckC.jpg',
+];
 
-export const categories = ['All', 'Movies', 'Cricket', 'Dramas', 'Anime', 'Football', 'Live', 'Novels', 'Shorts', 'Family'];
+const BACKDROPS = [
+  'xOMo8BRK7PfcJv2Jr5a9D8F3GpW.jpg', 'pbrkL804c8yAv3zBZR4QPEafpAR.jpg', 'm4TUa2ciEWSlk37rOsjiSIvZDXE.jpg',
+  'rLb2cwF3Pazuxaj0sRXQ037tGI1.jpg', 'en971MEXui9diirXlogOrPKmsEn.jpg', 'bQXAqRx2Fgc46uCVWgoPz5L5Dtr.jpg',
+  'jYEW5xZkZk2WTrdbMGAPFuBqbDc.jpg', 'yY76zq9XSuJ4nWyPDuwkdV7Wt0c.jpg', 'askg3SMvhqEl4OL52YuvdtY40Yb.jpg',
+  'Ab8mkHmkYADjU7wQiOkia9BzGvS.jpg', '5MnP0h7RcUCeX7gpxMYoMScmfq7.jpg', 'sRvXNDItGlWCqtO3j6wks52FmbD.jpg',
+];
 
+const poster = index => `https://image.tmdb.org/t/p/w780/${POSTERS[index % POSTERS.length]}`;
+const backdrop = index => `https://image.tmdb.org/t/p/original/${BACKDROPS[index % BACKDROPS.length]}`;
+const slugify = value => value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+export const categories = ['Home', 'Trending', 'Live', 'Movies', 'TV Series', 'Dramas', 'Short TV', 'Anime', 'Cricket', 'Football', 'Games', 'Kids'];
+export const searchFilterTags = ['All', 'Movies', 'Dramas', 'Series', 'Anime', 'Games', 'Novels'];
+export const trendingTabs = ['All Trending', 'Trending Movies', 'Trending Series', 'Trending Dramas', 'Trending Anime'];
+export const catalogSchemaVersion = 'flixora.mock.v3';
+
+const sectionDefinitions = [
+  {id: 'live-sports', title: 'Live Sports & Events', subtitle: 'Cricket, football and 24/7 live channels', category: 'Live', navTags: ['Live', 'Cricket', 'Football'], layout: 'wide', type: 'Live', titles: ['Pakistan vs Australia Live', 'Champions League Night', 'PSL Super Over', 'Premier League Live', 'World Cricket Highlights', 'Formula Grand Prix', 'Tennis Centre Court', 'Flixora News 24']},
+  {id: 'pakistani', title: 'Pakistani Movies & Dramas', subtitle: 'Cinema and television stories from Pakistan', category: 'Dramas', navTags: ['Movies', 'Dramas'], type: 'Drama', languages: ['Urdu', 'Punjabi'], titles: ['The Legend of Maula Jatt', 'Parizaad', 'Zindagi Gulzar Hai', 'Humsafar', 'Suno Chanda', 'Kabuli Pulao', 'Punjab Nahi Jaungi', 'Ehd-e-Wafa']},
+  {id: 'indian-hindi', title: 'Indian Movies & Hindi Dubbed', subtitle: 'Popular stories in Hindi and dual audio', category: 'Movies', navTags: ['Movies'], type: 'Movie', languages: ['Hindi', 'English'], titles: ['Jawan', 'Pathaan', 'Dangal', 'Drishyam 2', '12th Fail', 'Vikram Vedha', 'Kantara Hindi', 'Shershaah']},
+  {id: 'bollywood', title: 'Bollywood Blockbusters', subtitle: 'Big stars, music and unforgettable cinema', category: 'Movies', navTags: ['Movies', 'Trending'], type: 'Movie', languages: ['Hindi'], titles: ['Brahmāstra', 'War', 'Animal', 'Rocky Aur Rani', 'Fighter', 'Tiger 3', 'Gully Boy', 'Zindagi Na Milegi Dobara']},
+  {id: 'hollywood', title: 'Hollywood Hits', subtitle: 'English originals and dual-audio editions', category: 'Movies', navTags: ['Movies', 'Trending'], type: 'Movie', languages: ['English', 'Hindi'], titles: ['Dune: Part Two', 'Oppenheimer', 'Interstellar', 'The Batman', 'Top Gun: Maverick', 'Arrival', 'The Creator', 'Mission: Impossible']},
+  {id: 'south-indian', title: 'South Indian Movies', subtitle: 'Hindi dubbed and subtitled action favorites', category: 'Movies', navTags: ['Movies'], type: 'Movie', languages: ['Tamil', 'Telugu', 'Hindi'], titles: ['RRR', 'Vikram', 'Leo', 'Jailer', 'Pushpa', 'Baahubali', 'Salaar', 'K.G.F: Chapter 2']},
+  {id: 'k-dramas', title: 'Korean Dramas & K-Series', subtitle: 'Romance, mystery and must-watch K-drama', category: 'Dramas', navTags: ['Dramas', 'TV Series'], type: 'Drama', languages: ['Korean', 'English', 'Urdu'], titles: ['Queen of Tears', 'Crash Landing on You', 'Vincenzo', 'Moving', 'Lovely Runner', 'My Demon', 'Goblin', 'Extraordinary Attorney Woo']},
+  {id: 'k-web', title: 'Korean Web Series', subtitle: 'Binge-ready thrillers and originals', category: 'Series', navTags: ['TV Series', 'Trending'], type: 'Series', languages: ['Korean', 'English'], titles: ['Squid Game', 'All of Us Are Dead', 'The Glory', 'Bloodhounds', 'Sweet Home', 'Mask Girl', 'My Name', 'Kingdom']},
+  {id: 'turkish', title: 'Turkish Dramas', subtitle: 'Urdu and Hindi dubbed Turkish favorites', category: 'Dramas', navTags: ['Dramas', 'TV Series'], type: 'Drama', languages: ['Turkish', 'Urdu', 'Hindi'], titles: ['Ertuğrul', 'Kuruluş Osman', 'The Protector', 'Endless Love', 'The Gift', 'Golden Boy', 'The Pit', 'Midnight at the Pera Palace']},
+  {id: 'punjabi', title: 'Trending Punjabi Box', subtitle: 'Punjabi movies, comedy and music shows', category: 'Movies', navTags: ['Movies', 'Trending'], type: 'Movie', languages: ['Punjabi', 'Urdu'], titles: ['Carry on Jatta 3', 'Mastaney', 'Chal Mera Putt', 'Qismat 2', 'Jatt & Juliet', 'Warning 2', 'Ardaas', 'Angrej']},
+  {id: 'anime', title: 'Top Anime & Animated Series', subtitle: 'Simulcasts, classics and animated adventures', category: 'Anime', navTags: ['Anime', 'Kids'], type: 'Anime', languages: ['Japanese', 'English', 'Hindi'], titles: ['One Piece', 'Demon Slayer', 'Jujutsu Kaisen', 'Attack on Titan', 'Spy × Family', 'My Hero Academia', 'Spirited Away', 'Suzume']},
+  {id: 'web-series', title: 'Web Series & TV Serials', subtitle: 'Every genre, every episode, one library', category: 'Series', navTags: ['TV Series', 'Short TV'], type: 'Series', languages: ['English', 'Hindi'], titles: ['Shōgun', 'The Last of Us', 'The Bear', 'Fallout', 'Silo', 'Reacher', 'The Night Agent', 'Wednesday']},
+  {id: 'western-tv', title: 'Western TV Shows & Series', subtitle: 'Award-winning seasons and weekly episodes', category: 'Series', navTags: ['TV Series'], type: 'Series', languages: ['English', 'Spanish'], titles: ['House of the Dragon', 'The Boys', 'Succession', 'Stranger Things', 'The Crown', 'Peaky Blinders', 'Severance', 'Yellowstone']},
+  {id: 'indian-dramas', title: 'Indian Dramas & Serials', subtitle: 'Daily drama, family stories and romance', category: 'Dramas', navTags: ['Dramas', 'TV Series'], type: 'Drama', languages: ['Hindi', 'Urdu'], titles: ['Anupamaa', 'Yeh Rishta Kya Kehlata Hai', 'Ghum Hai Kisikey Pyaar Meiin', 'Kumkum Bhagya', 'Imlie', 'Udne Ki Aasha', 'Taarak Mehta', 'Kaise Mujhe Tum Mil Gaye']},
+  {id: 'kids', title: 'Kids & Family Collection', subtitle: 'Cartoons and safe family entertainment', category: 'Kids', navTags: ['Kids'], type: 'Kids', languages: ['English', 'Hindi', 'Urdu'], titles: ['Bluey', 'The Super Mario Bros. Movie', 'Inside Out 2', 'Kung Fu Panda 4', 'Moana', 'Frozen', 'Paw Patrol', 'The Lion King']},
+  {id: 'games-shorts', title: 'Online Games & Short TV', subtitle: 'Instant games and vertical mini-dramas', category: 'Games', navTags: ['Games', 'Short TV'], type: 'Game', languages: ['English', 'Urdu'], titles: ['Neon Drift', 'Cricket Super Over', 'Love in 60 Seconds', 'Mystery Door', 'Penalty King', 'Royal Match', 'Campus Secret', 'Zombie Dash']},
+  {id: 'novels', title: 'E-Books & Novels', subtitle: 'Interactive reading and offline chapters', category: 'Novels', navTags: [], type: 'Novel', languages: ['English', 'Urdu'], titles: ['The Silent Sea', 'The Last Kingdom', 'Neon Dreams', 'Moonlit Letters', 'City of Dust', 'The Glass Minaret', 'Echoes of Lahore', 'Beyond the Monsoon']},
+];
+
+function createEpisodes(itemId, seed) {
+  return Array.from({length: 10}, (_, index) => {
+    const season = index < 5 ? 1 : 2;
+    const number = index % 5 + 1;
+    return {
+      id: `${itemId}-s${season}e${number}`, season, number,
+      title: ['The Beginning', 'Crossing Lines', 'Hidden Truths', 'The Turning Point', 'After the Storm'][number - 1],
+      duration: `${42 + (seed + index) % 17}m`, introEnd: 78, sources: DEMO_STREAMS,
+    };
+  });
+}
+
+function createItem(definition, itemIndex, sectionIndex) {
+  const seed = sectionIndex * 11 + itemIndex;
+  const title = definition.titles[itemIndex];
+  const id = `${definition.id}-${slugify(title)}`;
+  const episodic = ['Series', 'Drama', 'Anime', 'Kids'].includes(definition.type);
+  const isLive = definition.type === 'Live' && itemIndex < 5;
+  const isNovel = definition.type === 'Novel';
+  const isGame = definition.type === 'Game';
+  return {
+    schema: catalogSchemaVersion,
+    id,
+    tmdbMockId: 10000 + seed,
+    slug: slugify(title),
+    title,
+    description: isNovel
+      ? `${title} is a Flixora original digital novel with immersive chapters, saved reading progress and offline access.`
+      : `${title} delivers a polished ${definition.type.toLowerCase()} experience with complete metadata, multi-language playback and personalized discovery.`,
+    overview: `Stream ${title} with adaptive quality, multiple audio tracks, subtitles and cross-device progress on Flixora.`,
+    category: definition.category,
+    sectionId: definition.id,
+    navTags: definition.navTags,
+    type: isLive ? 'Live' : definition.type,
+    genres: isGame ? ['Games', itemIndex % 2 ? 'Arcade' : 'Interactive'] : isNovel ? ['Fiction', itemIndex % 2 ? 'Mystery' : 'Drama'] : [itemIndex % 2 ? 'Drama' : 'Action', itemIndex % 3 ? 'Adventure' : 'Thriller'],
+    year: 2026 - seed % 7,
+    releaseDate: `${2026 - seed % 7}-${String(seed % 12 + 1).padStart(2, '0')}-15`,
+    rating: Number((7.2 + seed % 20 / 10).toFixed(1)),
+    popularity: 99 - seed % 42,
+    views: `${(1.1 + seed % 83 / 10).toFixed(1)}M`,
+    duration: isLive ? 'LIVE' : isNovel ? `${28 + seed % 34} chapters` : episodic ? '2 seasons' : `${105 + seed % 68}m`,
+    ageRating: definition.id === 'kids' ? '7+' : seed % 3 === 0 ? '16+' : '13+',
+    languages: definition.languages || ['English', 'Hindi'],
+    audioTracks: definition.languages || ['English', 'Hindi'],
+    subtitleTracks: ['English', 'Urdu', 'Hindi'],
+    qualities: ['Auto', '720p', '1080p', '4K'],
+    image: poster(seed),
+    backdrop: backdrop(seed),
+    trailerUrl: DEMO_STREAMS[2].url,
+    sources: isNovel ? [] : DEMO_STREAMS,
+    seasons: episodic ? [{number: 1, episodeCount: 5}, {number: 2, episodeCount: 5}] : [],
+    episodes: episodic ? createEpisodes(id, seed) : [],
+    isLive,
+    author: isNovel ? ['Ayesha Khan', 'Hassan Raza', 'Zara Ahmed', 'Mariam Ali'][itemIndex % 4] : undefined,
+    chapters: isNovel ? 28 + seed % 34 : undefined,
+    progress: isNovel ? [68, 21, 0, 44, 12, 0, 33, 6][itemIndex] : undefined,
+    accent: ['from-red-500 to-zinc-950', 'from-fuchsia-500 to-indigo-950', 'from-cyan-500 to-slate-950'][seed % 3],
+  };
+}
+
+export const sections = sectionDefinitions.map((definition, sectionIndex) => ({
+  ...definition,
+  layout: definition.layout || (definition.type === 'Novel' ? 'novel' : definition.type === 'Game' ? 'wide' : 'poster'),
+  items: definition.titles.map((_, itemIndex) => createItem(definition, itemIndex, sectionIndex)),
+}));
+
+export const contentCatalog = sections.flatMap(section => section.items);
+
+const pick = (sectionId, index = 0) => sections.find(section => section.id === sectionId).items[index];
 export const heroSlides = [
-  {
-    ...byId('dune'), category: 'Movies', eyebrow: '#1 MOVIE IN PAKISTAN', heroTitle: 'Dune: Part Two',
-    heroDescription: 'Paul Atreides joins Chani and the Fremen on a journey of revenge, destiny and survival.',
-  },
-  {
-    id: 'pak-vs-nz-live', title: 'Pakistan vs New Zealand', heroTitle: 'Pakistan vs New Zealand', eyebrow: 'LIVE NOW · 2ND T20',
-    description: 'Watch every ball live with Urdu and English commentary, instant highlights and live scorecards.',
-    heroDescription: 'Watch every ball live with Urdu and English commentary, instant highlights and live scorecards.',
-    category: 'Cricket', type: 'Live', year: 2026, rating: 9.1, duration: 'Live', isLive: true,
-    image: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&w=900&q=85',
-    backdrop: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&w=2000&q=90', sources: sampleSources,
-  },
-  {
-    ...byId('spirited'), category: 'Anime', eyebrow: 'ANIME SPOTLIGHT', heroTitle: 'Spirited Away',
-    heroDescription: 'Enter a spellbinding spirit world in Hayao Miyazaki’s Academy Award-winning adventure.',
-    backdrop: 'https://image.tmdb.org/t/p/original/Ab8mkHmkYADjU7wQiOkia9BzGvS.jpg',
-  },
-  {
-    id: 'champions-live', title: 'Champions Night Live', heroTitle: 'Champions Night Live', eyebrow: 'FOOTBALL · KICK-OFF 20:00',
-    description: 'The biggest European teams meet under the lights. Join the pre-match show and live coverage.',
-    heroDescription: 'The biggest European teams meet under the lights. Join the pre-match show and live coverage.',
-    category: 'Football', type: 'Live', year: 2026, rating: 8.9, duration: 'Tonight', isLive: true,
-    image: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?auto=format&fit=crop&w=900&q=85',
-    backdrop: 'https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=2000&q=90', sources: sampleSources,
-  },
+  {...pick('hollywood', 0), eyebrow: '#1 TRENDING WORLDWIDE', heroTitle: 'Dune: Part Two', heroDescription: 'A spectacular journey of destiny, courage and survival across the sands of Arrakis.'},
+  {...pick('live-sports', 0), eyebrow: 'LIVE NOW · CRICKET', heroTitle: 'Pakistan vs Australia', heroDescription: 'Watch every ball live with multi-language commentary, instant highlights and real-time scores.'},
+  {...pick('k-dramas', 0), eyebrow: 'K-DRAMA SPOTLIGHT', heroDescription: 'The global romance sensation, now streaming with Urdu, Hindi and English subtitles.'},
+  {...pick('anime', 0), eyebrow: 'NEW EPISODE', heroDescription: 'Set sail with the Straw Hat crew in the world’s biggest anime adventure.'},
+  {...pick('south-indian', 0), eyebrow: 'DUAL AUDIO PREMIERE', heroDescription: 'An epic action event presented in original audio and Hindi dubbed editions.'},
 ];
 
-const withCategory = (ids, category) => ids.map(id => ({...byId(id), category})).filter(item => item.id);
-
-export const trendingMovies = withCategory(['dune', 'interstellar', 'batman', 'spiderverse', 'oppenheimer', 'arrival', 'maverick'], 'Movies');
-
-export const liveSports = [
-  heroSlides[1], heroSlides[3],
-  {id: 'psl-live', title: 'Lahore vs Karachi', category: 'Cricket', type: 'Live', isLive: true, description: 'PSL night match live from Lahore.', duration: 'Live · 14.2 overs', rating: 8.8, image: 'https://images.unsplash.com/photo-1624526267942-ab0ff8a3e972?auto=format&fit=crop&w=1200&q=85', sources: sampleSources},
-  {id: 'premier-live', title: 'North London Derby', category: 'Football', type: 'Live', isLive: true, description: 'Live Premier League coverage and match analysis.', duration: '63 min', rating: 9.0, image: 'https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?auto=format&fit=crop&w=1200&q=85', sources: sampleSources},
-  {id: 'cricket-highlights', title: 'Today’s Cricket Highlights', category: 'Cricket', type: 'Highlights', description: 'Boundaries, wickets and the defining moments from today.', duration: '18m', rating: 8.6, image: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=1200&q=85', sources: sampleSources},
+const trendPicks = [
+  pick('hollywood', 0), pick('k-web', 0), pick('pakistani', 1), pick('anime', 0), pick('bollywood', 0),
+  pick('web-series', 0), pick('turkish', 0), pick('south-indian', 0), pick('k-dramas', 0), pick('punjabi', 0),
 ];
 
-export const dramas = [
-  ...withCategory(['shogun', 'lastofus', 'oppenheimer', 'interstellar'], 'Dramas'),
-  {...byId('planet'), id: 'planet-stories', title: 'Planet Earth Stories', category: 'Dramas', image: 'https://image.tmdb.org/t/p/w780/uBZQOYZLIU9dBmd62fdzBAoropu.jpg'},
-];
+export const trendingNow = trendPicks.map((item, index) => ({
+  ...item,
+  rank: index + 1,
+  popularityBadge: index < 3 ? 'HOT' : index < 6 ? 'RISING' : 'POPULAR',
+  trendGroup: item.type === 'Movie' ? 'Trending Movies' : item.type === 'Anime' ? 'Trending Anime' : item.type === 'Drama' ? 'Trending Dramas' : 'Trending Series',
+}));
 
-export const anime = [
-  {...byId('spirited'), category: 'Anime'},
-  {...byId('spiderverse'), id: 'spiderverse-anime', category: 'Anime'},
-  {id: 'suzume', title: 'Suzume', category: 'Anime', type: 'Anime', year: 2023, rating: 7.6, duration: '2h 1m', description: 'A determined teenager closes mysterious doors that are releasing disasters across Japan.', image: 'https://image.tmdb.org/t/p/w780/vIeu8WysZrTSFb2uhPViKjX9EcC.jpg', sources: sampleSources},
-  {id: 'your-name', title: 'Your Name', category: 'Anime', type: 'Anime', year: 2016, rating: 8.4, duration: '1h 46m', description: 'Two teenagers discover a strange connection that changes both of their lives.', image: 'https://image.tmdb.org/t/p/w780/q719jXXEzOoYaps6babgKnONONX.jpg', sources: sampleSources},
-  {id: 'one-piece', title: 'One Piece', category: 'Anime', type: 'Series', year: 2024, rating: 8.9, duration: 'New episode', description: 'Sail with the Straw Hat crew on the ultimate adventure.', image: 'https://image.tmdb.org/t/p/w780/cMD9Ygz11zjJzAovURpO75Qg7rT.jpg', sources: sampleSources},
-];
+export const novels = sections.find(section => section.id === 'novels').items;
+export const shorts = sections.find(section => section.id === 'games-shorts').items.map((item, index) => ({
+  ...item,
+  type: 'Short',
+  category: 'Short TV',
+  creator: ['@flixoraoriginals', '@sportsdesk', '@dramabox', '@gamezone'][index % 4],
+  duration: `0:${18 + index * 5}`,
+}));
 
-export const novels = [
-  {id: 'novel-silent-sea', title: 'The Silent Sea', author: 'Ayesha Khan', category: 'Novels', type: 'Novel', chapters: 32, progress: 68, accent: 'from-cyan-500 to-blue-950', image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&w=800&q=85', description: 'A lost signal draws a marine biologist into an impossible mystery.'},
-  {id: 'novel-last-kingdom', title: 'The Last Kingdom', author: 'Hassan Raza', category: 'Novels', type: 'Novel', chapters: 46, progress: 21, accent: 'from-amber-500 to-red-950', image: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=800&q=85', description: 'An exiled prince returns to a kingdom divided by secrets.'},
-  {id: 'novel-neon-dreams', title: 'Neon Dreams', author: 'Zara Ahmed', category: 'Novels', type: 'Novel', chapters: 28, progress: 0, accent: 'from-fuchsia-500 to-violet-950', image: 'https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&w=800&q=85', description: 'A cyberpunk romance hidden inside a city that never sleeps.'},
-  {id: 'novel-moonlit', title: 'Moonlit Letters', author: 'Mariam Ali', category: 'Novels', type: 'Novel', chapters: 39, progress: 44, accent: 'from-indigo-400 to-slate-950', image: 'https://images.unsplash.com/photo-1495446815901-a7297e633e8d?auto=format&fit=crop&w=800&q=85', description: 'Letters from the past reveal a love story that time forgot.'},
-  {id: 'novel-dust', title: 'City of Dust', author: 'Omar Farooq', category: 'Novels', type: 'Novel', chapters: 51, progress: 0, accent: 'from-orange-400 to-stone-950', image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?auto=format&fit=crop&w=800&q=85', description: 'One detective faces a city where every memory can be bought.'},
-];
+export const searchableItems = Array.from(new Map([...heroSlides, ...trendingNow, ...contentCatalog, ...shorts].map(item => [item.id, item])).values());
 
-export const shorts = [
-  {id: 'short-dune', title: 'Behind the sandworms', creator: '@flixora', category: 'Shorts', type: 'Short', views: '2.4M', duration: '0:34', image: 'https://image.tmdb.org/t/p/w780/xOMo8BRK7PfcJv2Jr5a9D8F3GpW.jpg', sources: sampleSources},
-  {id: 'short-cricket', title: 'Unbelievable last-ball six', creator: '@sportsdesk', category: 'Shorts', type: 'Short', views: '5.8M', duration: '0:22', image: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&w=700&q=85', sources: sampleSources},
-  {id: 'short-anime', title: 'Anime scenes that feel unreal', creator: '@otakuworld', category: 'Shorts', type: 'Short', views: '1.2M', duration: '0:41', image: 'https://image.tmdb.org/t/p/w780/Ab8mkHmkYADjU7wQiOkia9BzGvS.jpg', sources: sampleSources},
-  {id: 'short-football', title: 'Top corner from 30 yards', creator: '@goalline', category: 'Shorts', type: 'Short', views: '3.7M', duration: '0:18', image: 'https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=700&q=85', sources: sampleSources},
-  {id: 'short-cinema', title: 'How this shot was made', creator: '@cinefiles', category: 'Shorts', type: 'Short', views: '860K', duration: '0:52', image: 'https://image.tmdb.org/t/p/w780/pbrkL804c8yAv3zBZR4QPEafpAR.jpg', sources: sampleSources},
-];
-
-export const sections = [
-  {id: 'trending', title: 'Trending Movies', subtitle: 'What everyone is watching', category: 'Movies', items: trendingMovies, layout: 'poster'},
-  {id: 'sports', title: 'Live Cricket & Football', subtitle: 'Matches, scores and highlights', category: 'Live', items: liveSports, layout: 'wide'},
-  {id: 'dramas', title: 'Popular Dramas & TV Shows', subtitle: 'Stories worth staying up for', category: 'Dramas', items: dramas, layout: 'poster'},
-  {id: 'anime', title: 'Trending Anime', subtitle: 'Fresh episodes and timeless favorites', category: 'Anime', items: anime, layout: 'poster'},
-  {id: 'novels', title: 'Latest Novels & Read', subtitle: 'Your next chapter starts here', category: 'Novels', items: novels, layout: 'novel'},
-  {id: 'shorts', title: 'Short Clips & Reels', subtitle: 'Fast stories, big moments', category: 'Shorts', items: shorts, layout: 'short'},
-];
-
-export const searchableItems = Array.from(new Map([...heroSlides, ...sections.flatMap(section => section.items)].map(item => [item.id, item])).values());
+export const mockCatalogResponse = {
+  schema: catalogSchemaVersion,
+  generatedAt: '2026-11-03T00:00:00.000Z',
+  pagination: {page: 1, pageSize: contentCatalog.length, total: contentCatalog.length},
+  facets: {categories, searchFilterTags, languages: ['English', 'Urdu', 'Hindi', 'Punjabi', 'Korean', 'Turkish', 'Japanese', 'Tamil', 'Telugu']},
+  results: contentCatalog,
+};

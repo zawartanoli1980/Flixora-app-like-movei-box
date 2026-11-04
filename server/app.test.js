@@ -103,6 +103,41 @@ test('malformed JSON is reported as a client error', async () => {
   });
 });
 
+test('Gemini chat validates input and uses only the injected backend service', async () => {
+  const calls = [];
+  const geminiService = {
+    async chat(input) {
+      calls.push(input);
+      return {answer: 'Watch Arrival next.', model: 'gemini-test'};
+    },
+  };
+  await withServer({geminiService}, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/v1/ai/chat`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({message: 'Suggest a thoughtful sci-fi movie', profile: 'general', locale: 'en'}),
+    });
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), {answer: 'Watch Arrival next.', model: 'gemini-test'});
+    assert.equal(calls[0].message, 'Suggest a thoughtful sci-fi movie');
+
+    const invalid = await fetch(`${baseUrl}/api/v1/ai/chat`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({message: ''}),
+    });
+    assert.equal(invalid.status, 400);
+  });
+  await withServer({}, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/v1/ai/chat`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({message: 'Recommend a movie'}),
+    });
+    assert.equal(response.status, 503);
+  });
+});
+
 test('TMDB routes validate input and dispatch normalized service options', async () => {
   const calls = [];
   const tmdbService = {

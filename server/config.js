@@ -15,6 +15,11 @@ const optionalTmdbToken = z.preprocess(
   z.string().trim().min(20, 'TMDB_API_TOKEN must contain at least 20 characters').max(4096).optional(),
 );
 
+const optionalGeminiKey = z.preprocess(
+  (value) => value === '' || value === undefined ? undefined : value,
+  z.string().trim().min(20, 'GEMINI_API_KEY must contain at least 20 characters').max(4096).optional(),
+);
+
 const envSchema = z.object({
   PORT: z.coerce.number().int().min(1).max(65535).default(3001),
   DATABASE_URL: optionalString,
@@ -30,6 +35,9 @@ const envSchema = z.object({
   TMDB_API_BASE_URL: z.string().url().default('https://api.themoviedb.org/3'),
   TMDB_IMAGE_BASE_URL: z.string().url().default('https://image.tmdb.org/t/p'),
   TMDB_LANGUAGE: z.string().trim().regex(/^[a-z]{2}(?:-[A-Z]{2})?$/).default('en-US'),
+  GEMINI_API_KEY: optionalGeminiKey,
+  GEMINI_MODEL: z.string().trim().regex(/^[a-zA-Z0-9._-]+$/).default('gemini-2.5-flash'),
+  GEMINI_API_BASE_URL: z.string().url().default('https://generativelanguage.googleapis.com/v1beta'),
   STREAM_SERVER_1_TEMPLATE: optionalString,
   STREAM_SERVER_2_TEMPLATE: optionalString,
   STREAM_CDN_HLS_TEMPLATE: optionalString,
@@ -100,6 +108,9 @@ export function loadConfig(environment = process.env) {
     tmdbApiBaseUrl: parsed.data.TMDB_API_BASE_URL,
     tmdbImageBaseUrl: parsed.data.TMDB_IMAGE_BASE_URL,
     tmdbLanguage: parsed.data.TMDB_LANGUAGE,
+    geminiApiKey: parsed.data.GEMINI_API_KEY,
+    geminiModel: parsed.data.GEMINI_MODEL,
+    geminiApiBaseUrl: parsed.data.GEMINI_API_BASE_URL,
     streamServer1Template: parsed.data.STREAM_SERVER_1_TEMPLATE,
     streamServer2Template: parsed.data.STREAM_SERVER_2_TEMPLATE,
     streamCdnHlsTemplate: parsed.data.STREAM_CDN_HLS_TEMPLATE,

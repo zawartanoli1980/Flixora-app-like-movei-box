@@ -20,6 +20,7 @@ The downloadable demo is intentionally honest about its boundaries: it uses publ
 - Five-second featured carousel, voice and tag search, ranked multi-tab Trending hub, skeleton artwork loaders, and 17 horizontally scrolling regional/category collections.
 - Versioned mock catalog schema with 136 complete records, seasons, episodes, multi-audio/subtitle metadata, quality variants, popularity, views, and TMDB-compatible artwork fields.
 - HLS/HTML5 player with server failover, 4K/1080p/720p quality, speed, audio, subtitles, season/episode selection, Skip Intro, Next Episode, and 10-second progress sync.
+- Backend-only Gemini assistant integration with validated chat requests, safe timeouts/rate-limit errors, and an in-app recommendation widget.
 - Vertical snap Shorts feed, interactive novel reader, See All collection modals, Continue Watching, live cricket/football, games, and Kids content.
 - Functional Home, Shorts, Download, Novels, and Profile views with local watchlist, history, and simulated web download progress.
 - Adult and Kids demo profiles with profile-isolated local data, Kids catalog restrictions, and a clearly labelled demo PIN (`1234`).
@@ -80,6 +81,17 @@ Use an Expo development build for native video behavior. Before publishing, repl
 Add a TMDB API Read Access Token to the server's `.env`; never expose it through an `EXPO_PUBLIC_*` variable. The mobile catalog automatically uses the normalized backend endpoints and falls back to bundled demo data when the backend is unavailable. Streaming source templates must point to content you are authorized to distribute.
 
 See [docs/TMDB_INTEGRATION.md](docs/TMDB_INTEGRATION.md) for environment variables, endpoint examples, filtering options, source mapping, attribution, and production guidance.
+
+## Gemini AI setup
+
+Create a fresh key at [Google AI Studio](https://aistudio.google.com/apikey) and add it only to the backend `.env` file:
+
+```env
+GEMINI_API_KEY=your-new-private-key
+GEMINI_MODEL=gemini-2.5-flash
+```
+
+Start the API with `npm run api`. The web assistant calls `POST /api/v1/ai/chat`; the key never enters the React bundle. Rotate any key that has been pasted into chat, logs, screenshots, or source control.
 
 ## Repository map
 

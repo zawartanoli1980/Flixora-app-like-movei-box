@@ -7,6 +7,7 @@ import { createPlaybackSigner } from './playback.js';
 import { createProfilePinService } from './pin.js';
 import { createSourceMapper, sourceDefinitionsFromConfig } from './source-mapper.js';
 import { createTmdbService } from './tmdb.js';
+import { createGeminiService } from './gemini.js';
 
 export { createApp, loadConfig };
 
@@ -32,12 +33,18 @@ export function startServer(environment = process.env) {
     defaultRegion: config.defaultCountry,
     sourceMapper,
   }) : null;
+  const geminiService = config.geminiApiKey ? createGeminiService({
+    apiKey: config.geminiApiKey,
+    model: config.geminiModel,
+    baseUrl: config.geminiApiBaseUrl,
+  }) : null;
   const app = createApp({
     pool,
     authVerifier: createJwtVerifier(config),
     playbackSigner: createPlaybackSigner(config),
     pinService: createProfilePinService(config),
     tmdbService,
+    geminiService,
     config,
   });
   const server = app.listen(config.port, '0.0.0.0', () => {

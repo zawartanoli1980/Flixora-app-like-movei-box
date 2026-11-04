@@ -75,6 +75,11 @@ const viewingEventSchema = z.object({
   occurredAt: z.string().datetime({ offset: true }),
   metadata: z.record(z.string(), z.unknown()).optional().default({}),
 }).strict();
+const aiChatSchema = z.object({
+  message: z.string().trim().min(2).max(2000),
+  profile: z.enum(['general', 'adult', 'kids']).optional().default('general'),
+  locale: z.string().trim().regex(/^[a-z]{2}(?:-[A-Z]{2})?$/).optional().default('en'),
+}).strict();
 
 function asyncRoute(handler) {
   return (request, response, next) => Promise.resolve(handler(request, response, next)).catch(next);
@@ -205,6 +210,7 @@ export function createApp({
   playbackSigner = null,
   pinService = null,
   tmdbService = null,
+  geminiService = null,
   config = {},
   logger = console,
 } = {}) {
@@ -254,6 +260,7 @@ export function createApp({
           playbackSigning: Boolean(playbackSigner),
           profilePinUnlock: Boolean(pinService),
           tmdb: Boolean(tmdbService),
+          gemini: Boolean(geminiService),
         });
       }
       return response.status(503).json({
@@ -270,6 +277,7 @@ export function createApp({
       playbackSigning: Boolean(playbackSigner),
       profilePinUnlock: Boolean(pinService),
       tmdb: Boolean(tmdbService),
+      gemini: Boolean(geminiService),
     });
   }));
 
@@ -292,6 +300,14 @@ export function createApp({
   app.get('/api/media', catalogHandler);
   app.get('/api/v1/media', catalogHandler);
   registerTmdbRoutes(app, { tmdbService });
+
+  app.post('/api/v1/ai/chat', asyncRoute(async (request, response) => {
+    if (!geminiService) return response.status(503).json({error: 'Gemini integration is not configured'});
+    const parsed = aiChatSchema.safeParse(request.body);
+    if (!parsed.success) return validationError(response, parsed.error);
+    const result = await geminiService.chat(parsed.data);
+    return response.json(result);
+  }));
 
   app.get('/api/v1/media/:mediaId/episodes', requireDatabase, asyncRoute(async (request, response) => {
     const mediaId = parseUuid(request.params.mediaId, response, 'mediaId');
@@ -783,6 +799,7 @@ export function createApp({
     });
     if (error.type === 'entity.parse.failed') return response.status(400).json({ error: 'Malformed JSON body' });
     if (error.name === 'TmdbApiError') return response.status(error.status).json({ error: error.message, code: error.code });
+    if (error.name === 'GeminiApiError') return response.status(error.status).json({ error: error.message, code: error.code });
     if (error.code === '23503') return response.status(409).json({ error: 'Referenced resource does not exist' });
     if (error.code === '23505') return response.status(409).json({ error: 'Resource already exists' });
     return response.status(500).json({ error: 'Internal server error' });

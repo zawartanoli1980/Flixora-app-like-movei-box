@@ -1,9 +1,9 @@
 import React, {useEffect, useMemo, useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {
-  Bell, BookOpen, Bookmark, Check, ChevronLeft, ChevronRight, Clock3, Download,
+  Bell, BookOpen, Bookmark, Bot, Check, ChevronLeft, ChevronRight, Clock3, Download,
   Flame, Heart, Home, LibraryBig, Mic, MicOff, Pause, Play, Search, Settings,
-  SlidersHorizontal, Star, Trash2, TrendingUp, UserRound, Video, Wifi, X,
+  Send, SlidersHorizontal, Star, Trash2, TrendingUp, UserRound, Video, Wifi, X,
 } from 'lucide-react';
 import Player from './Player';
 import {
@@ -203,6 +203,7 @@ function App() {
       </main>
 
       <BottomNav active={activeTab} onChange={navigate} />
+      <GeminiAssistant />
       {player && <Player movie={player} onClose={() => setPlayer(null)} initialProgress={history[player.id]?.position || 0} onProgress={(id, position, duration, metadata) => setHistory(current => ({...current, [id]: {position, duration, updatedAt: Date.now(), ...metadata}}))} />}
       {toast && <div className="fixed bottom-28 left-1/2 z-[80] flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/10 bg-zinc-900/95 px-5 py-3 text-sm font-semibold shadow-2xl backdrop-blur-xl"><Check size={17} className="text-emerald-400" />{toast}</div>}
     </div>
@@ -387,6 +388,51 @@ function EmptyState({icon: Icon, title, text}) { return <div className="mt-10 gr
 
 function BottomNav({active, onChange}) {
   return <nav className="fixed bottom-0 left-1/2 z-40 w-full -translate-x-1/2 border-t border-white/10 bg-slate-950/90 px-2 pb-[max(.6rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-20px_50px_rgba(2,6,23,.65)] backdrop-blur-2xl sm:bottom-5 sm:max-w-xl sm:rounded-2xl sm:border sm:px-3 sm:pb-2"><div className="flex items-center justify-around">{tabs.map(({id, label, icon: Icon}) => <button key={id} onClick={() => onChange(id)} className={`relative flex min-w-14 flex-col items-center gap-1 rounded-xl px-3 py-2 text-[10px] font-bold transition sm:min-w-20 ${active === id ? 'bg-red-500/15 text-red-300' : 'text-slate-500 hover:bg-white/5 hover:text-slate-200'}`}><Icon size={20} fill={active === id && id === 'Home' ? 'currentColor' : 'none'} /><span>{label}</span>{active === id && <span className="absolute -top-2 h-0.5 w-6 rounded-full bg-red-400 shadow-[0_0_10px_#ef4444]" />}</button>)}</div></nav>;
+}
+
+function GeminiAssistant() {
+  const [open, setOpen] = useState(false);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [messages, setMessages] = useState([{role: 'assistant', text: 'Salam! Main Flixora AI hoon. Mood, genre ya kisi movie ka naam batayein.'}]);
+
+  const send = async event => {
+    event.preventDefault();
+    const message = input.trim();
+    if (!message || loading) return;
+    setInput('');
+    setMessages(current => [...current, {role: 'user', text: message}]);
+    setLoading(true);
+    try {
+      if (window.location.protocol === 'file:') throw new Error('standalone');
+      const response = await fetch('/api/v1/ai/chat', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({message, profile: 'general', locale: 'en'}),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || 'AI request failed');
+      setMessages(current => [...current, {role: 'assistant', text: payload.answer}]);
+    } catch (error) {
+      const text = error.message === 'standalone'
+        ? 'AI chat ke liye backend start karein: npm run api. Standalone dashboard baqi features ke saath kaam karta rahega.'
+        : 'Gemini abhi connect nahi ho saka. Backend aur GEMINI_API_KEY configuration check karein.';
+      setMessages(current => [...current, {role: 'assistant', text}]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed bottom-24 right-4 z-[65] sm:bottom-6 sm:right-6">
+      {open && <section className="mb-3 flex h-[min(520px,68vh)] w-[min(380px,calc(100vw-32px))] flex-col overflow-hidden rounded-3xl border border-red-500/20 bg-zinc-950/95 shadow-[0_25px_90px_rgba(0,0,0,.75)] backdrop-blur-2xl" aria-label="Flixora AI assistant">
+        <header className="flex items-center justify-between border-b border-white/10 bg-gradient-to-r from-red-950/80 to-zinc-950 p-4"><div className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-xl bg-red-500"><Bot size={20} /></span><div><strong className="block text-sm">Flixora AI</strong><span className="text-[10px] text-emerald-400">Gemini powered</span></div></div><button onClick={() => setOpen(false)} className="grid h-9 w-9 place-items-center rounded-full bg-white/5 hover:bg-white/10" aria-label="Close AI assistant"><X size={17} /></button></header>
+        <div className="no-scrollbar flex-1 space-y-3 overflow-y-auto p-4">{messages.map((message, index) => <div key={`${message.role}-${index}`} className={`max-w-[88%] rounded-2xl px-4 py-3 text-sm leading-6 ${message.role === 'user' ? 'ml-auto rounded-br-md bg-red-500 text-white' : 'rounded-bl-md bg-white/[.07] text-slate-200'}`}>{message.text}</div>)}{loading && <div className="w-fit rounded-2xl bg-white/[.07] px-4 py-3 text-sm text-slate-400">Soch raha hoon…</div>}</div>
+        <form onSubmit={send} className="flex gap-2 border-t border-white/10 p-3"><input value={input} onChange={event => setInput(event.target.value)} maxLength={2000} placeholder="Ask for a recommendation…" className="h-11 min-w-0 flex-1 rounded-xl border border-white/10 bg-white/5 px-3 text-sm outline-none focus:border-red-500" /><button type="submit" disabled={!input.trim() || loading} className="grid h-11 w-11 place-items-center rounded-xl bg-red-500 text-white transition hover:bg-red-400 disabled:cursor-not-allowed disabled:opacity-40" aria-label="Send to Flixora AI"><Send size={17} /></button></form>
+      </section>}
+      <button onClick={() => setOpen(value => !value)} className="ml-auto flex h-14 items-center gap-2 rounded-full bg-gradient-to-r from-red-600 to-rose-500 px-4 font-black text-white shadow-[0_10px_35px_rgba(239,68,68,.35)] transition hover:scale-105" aria-expanded={open}><Bot size={21} /><span className="hidden sm:inline">Ask Flixora AI</span></button>
+    </div>
+  );
 }
 
 createRoot(document.getElementById('root')).render(<React.StrictMode><App /></React.StrictMode>);

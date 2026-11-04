@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import Player from './Player';
 import {
-  categories, heroSlides, novels, searchableItems, searchFilterTags, sections,
+  categories, heroSlides, novels, openMovies, searchableItems, searchFilterTags, sections,
   shorts, trendingNow, trendingTabs,
 } from './dashboardData';
 import './styles.css';
@@ -71,10 +71,29 @@ function App() {
     [heroSlides[2].id]: {position: 1240, duration: 3300, updatedAt: Date.now() - 480000},
   }));
   const [toast, setToast] = useState('');
+  const [publicMedia, setPublicMedia] = useState(openMovies);
+  const [publicMediaState, setPublicMediaState] = useState('ready');
 
   useEffect(() => { localStorage.setItem('flixora:dashboard-downloads', JSON.stringify(downloads)); }, [downloads]);
   useEffect(() => { localStorage.setItem('flixora:dashboard-favorites', JSON.stringify(favorites)); }, [favorites]);
   useEffect(() => { localStorage.setItem('flixora:dashboard-history', JSON.stringify(history)); }, [history]);
+
+  useEffect(() => {
+    if (window.location.protocol === 'file:') return undefined;
+    setPublicMediaState('loading');
+    const controller = new AbortController();
+    fetch('/api/v1/public-media?limit=8', {signal: controller.signal})
+      .then(async response => {
+        if (!response.ok) throw new Error('provider unavailable');
+        return response.json();
+      })
+      .then(payload => {
+        setPublicMedia(Array.isArray(payload.items) ? payload.items : []);
+        setPublicMediaState('ready');
+      })
+      .catch(error => { if (error.name !== 'AbortError') setPublicMediaState('ready'); });
+    return () => controller.abort();
+  }, []);
 
   useEffect(() => {
     if (heroPaused || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return undefined;
@@ -107,9 +126,9 @@ function App() {
       || (searchTag === 'Series' && ['Series', 'TV Series'].includes(item.type))
       || item.type === searchTag.slice(0, -1)
       || item.category === searchTag;
-    return searchableItems.filter(item => tagMatch(item) && (!term || [item.title, item.category, item.type, item.description, item.author, ...(item.genres || []), ...(item.languages || [])]
+    return [...publicMedia, ...searchableItems].filter(item => tagMatch(item) && (!term || [item.title, item.category, item.type, item.description, item.author, ...(item.genres || []), ...(item.languages || [])]
       .filter(Boolean).some(value => String(value).toLowerCase().includes(term))));
-  }, [query, searchTag]);
+  }, [query, searchTag, publicMedia]);
 
   const visibleSections = useMemo(() => {
     if (activeCategory === 'Home') return sections;
@@ -154,6 +173,7 @@ function App() {
   const renderCard = (item, layout = 'poster') => (
     <MediaCard key={item.id} item={item} layout={layout} favorite={favorites.includes(item.id)} onPlay={() => play(item)} onDownload={() => addDownload(item)} onFavorite={() => toggleFavorite(item)} />
   );
+  const publicSection = {id: 'public-media', title: 'Free & Legal Movies', subtitle: 'Public Domain and Creative Commons films from Internet Archive', category: 'Movies', items: publicMedia, layout: 'poster'};
   const searchMode = Boolean(query.trim() || searchTag !== 'All');
 
   return (
@@ -192,6 +212,7 @@ function App() {
             <div className="relative z-10 -mt-5 space-y-10 sm:-mt-10 sm:space-y-12">
               {['Home', 'Trending'].includes(activeCategory) && <TrendingHub items={trendingNow} onPlay={play} />}
               {activeCategory === 'Home' && continueItems.length > 0 && <ContinueWatching items={continueItems} history={history} onPlay={play} />}
+              {['Home', 'Movies'].includes(activeCategory) && <PublicMediaRail section={publicSection} state={publicMediaState} onSeeAll={() => setViewAll(publicSection)} renderCard={renderCard} />}
               {visibleSections.map(section => section.items.length > 0 && <ContentRow key={section.id} section={section} onSeeAll={() => setViewAll(section)} renderCard={renderCard} />)}
             </div>
           </>
@@ -283,6 +304,18 @@ function ContentRow({section, onSeeAll, renderCard}) {
   );
 }
 
+function PublicMediaRail({section, state, onSeeAll, renderCard}) {
+  if (state === 'ready' && section.items.length) return <ContentRow section={section} onSeeAll={onSeeAll} renderCard={renderCard} />;
+  return (
+    <section className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-10">
+      <div className="rounded-3xl border border-emerald-500/15 bg-gradient-to-r from-emerald-950/20 to-zinc-950 p-5 sm:p-6">
+        <div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-xl bg-emerald-500/15 text-emerald-400"><Play size={19} fill="currentColor" /></span><div><h2 className="text-xl font-black">Free & Legal Movies</h2><p className="mt-1 text-xs text-slate-400">{state === 'loading' ? 'Internet Archive se licensed catalog load ho raha hai…' : 'Live imports ke liye backend `npm run api` se start karein.'}</p></div></div>
+        {state === 'loading' && <div className="mt-5 flex gap-3 overflow-hidden">{Array.from({length: 5}, (_, index) => <div key={index} className="poster-skeleton aspect-[2/3] w-36 shrink-0 rounded-2xl sm:w-44" />)}</div>}
+      </div>
+    </section>
+  );
+}
+
 function MediaCard({item, layout, favorite, onPlay, onDownload, onFavorite}) {
   if (layout === 'novel') return <NovelCard item={item} />;
   if (layout === 'short') return <ShortCard item={item} onPlay={onPlay} />;
@@ -300,6 +333,7 @@ function MediaCard({item, layout, favorite, onPlay, onDownload, onFavorite}) {
         </div>
       </button>
       {!wide && <div className="p-3"><Meta item={item} /></div>}
+      {item.licenseUrl && <a href={item.licenseUrl} target="_blank" rel="noreferrer" className="absolute bottom-2 right-2 rounded-full bg-emerald-500/90 px-2 py-1 text-[9px] font-black text-black hover:bg-emerald-300" aria-label={`View license for ${item.title}`}>FREE LICENSE</a>}
       <div className="absolute right-2 top-2 flex translate-y-1 gap-1 opacity-0 transition group-hover:translate-y-0 group-hover:opacity-100 focus-within:translate-y-0 focus-within:opacity-100">
         <button onClick={onFavorite} className="grid h-8 w-8 place-items-center rounded-full bg-black/65 backdrop-blur hover:bg-red-500" aria-label="Add to My List"><Heart size={14} fill={favorite ? 'currentColor' : 'none'} /></button>
         <button onClick={onDownload} className="grid h-8 w-8 place-items-center rounded-full bg-black/65 backdrop-blur hover:bg-red-500" aria-label="Download"><Download size={14} /></button>

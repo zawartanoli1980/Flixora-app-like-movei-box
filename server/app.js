@@ -211,6 +211,7 @@ export function createApp({
   pinService = null,
   tmdbService = null,
   geminiService = null,
+  publicMediaService = null,
   config = {},
   logger = console,
 } = {}) {
@@ -261,6 +262,7 @@ export function createApp({
           profilePinUnlock: Boolean(pinService),
           tmdb: Boolean(tmdbService),
           gemini: Boolean(geminiService),
+          publicMedia: Boolean(publicMediaService),
         });
       }
       return response.status(503).json({
@@ -278,6 +280,7 @@ export function createApp({
       profilePinUnlock: Boolean(pinService),
       tmdb: Boolean(tmdbService),
       gemini: Boolean(geminiService),
+      publicMedia: Boolean(publicMediaService),
     });
   }));
 
@@ -307,6 +310,13 @@ export function createApp({
     if (!parsed.success) return validationError(response, parsed.error);
     const result = await geminiService.chat(parsed.data);
     return response.json(result);
+  }));
+
+  app.get('/api/v1/public-media', asyncRoute(async (request, response) => {
+    if (!publicMediaService) return response.status(503).json({error: 'Public media integration is not configured'});
+    const parsed = z.object({limit: z.coerce.number().int().min(1).max(12).optional().default(8)}).strict().safeParse(request.query);
+    if (!parsed.success) return validationError(response, parsed.error);
+    return response.json(await publicMediaService.list(parsed.data));
   }));
 
   app.get('/api/v1/media/:mediaId/episodes', requireDatabase, asyncRoute(async (request, response) => {
@@ -800,6 +810,7 @@ export function createApp({
     if (error.type === 'entity.parse.failed') return response.status(400).json({ error: 'Malformed JSON body' });
     if (error.name === 'TmdbApiError') return response.status(error.status).json({ error: error.message, code: error.code });
     if (error.name === 'GeminiApiError') return response.status(error.status).json({ error: error.message, code: error.code });
+    if (error.name === 'PublicMediaApiError') return response.status(error.status).json({ error: error.message, code: error.code });
     if (error.code === '23503') return response.status(409).json({ error: 'Referenced resource does not exist' });
     if (error.code === '23505') return response.status(409).json({ error: 'Resource already exists' });
     return response.status(500).json({ error: 'Internal server error' });

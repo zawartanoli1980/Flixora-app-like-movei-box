@@ -487,6 +487,7 @@ export default function Player({movie, onClose, onProgress, initialProgress = 0}
             ? 'Public sample footage is playing. Licensed titles use server-authorized sources, tracks, and episodes.'
             : 'Playback uses the authorized source selected for this title.'}
         </p>
+        {movie.licenseUrl && <p className="muted">Source: Internet Archive · <a href={movie.licenseUrl} target="_blank" rel="noreferrer">View licence and attribution</a></p>}
       </section>
     </div>
   );

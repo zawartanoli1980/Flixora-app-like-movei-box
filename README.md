@@ -21,6 +21,7 @@ The downloadable demo is intentionally honest about its boundaries: it uses publ
 - Versioned mock catalog schema with 136 complete records, seasons, episodes, multi-audio/subtitle metadata, quality variants, popularity, views, and TMDB-compatible artwork fields.
 - HLS/HTML5 player with server failover, 4K/1080p/720p quality, speed, audio, subtitles, season/episode selection, Skip Intro, Next Episode, and 10-second progress sync.
 - Backend-only Gemini assistant integration with validated chat requests, safe timeouts/rate-limit errors, and an in-app recommendation widget.
+- Runtime Internet Archive importer restricted to Public Domain/Creative Commons records, with licence attribution and direct MP4 playback in a dedicated rail.
 - Vertical snap Shorts feed, interactive novel reader, See All collection modals, Continue Watching, live cricket/football, games, and Kids content.
 - Functional Home, Shorts, Download, Novels, and Profile views with local watchlist, history, and simulated web download progress.
 - Adult and Kids demo profiles with profile-isolated local data, Kids catalog restrictions, and a clearly labelled demo PIN (`1234`).
@@ -92,6 +93,10 @@ GEMINI_MODEL=gemini-2.5-flash
 ```
 
 Start the API with `npm run api`. The web assistant calls `POST /api/v1/ai/chat`; the key never enters the React bundle. Rotate any key that has been pasted into chat, logs, screenshots, or source control.
+
+## Free legal video imports
+
+Start the backend with `npm run api`. Flixora loads `GET /api/v1/public-media`, verifies Creative Commons/Public Domain licence metadata, discovers an MP4 derivative, and shows the result in the **Free & Legal Movies** rail. Provider responses are cached for 15 minutes. If Internet Archive is unavailable, the endpoint serves verified Creative Commons Blender Open Movies such as Big Buck Bunny, Sintel, Elephants Dream, and Tears of Steel. Every title keeps its licence link and attribution.
 
 ## Repository map
 

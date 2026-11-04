@@ -32,6 +32,24 @@ export const searchFilterTags = ['All', 'Movies', 'Dramas', 'Series', 'Anime', '
 export const trendingTabs = ['All Trending', 'Trending Movies', 'Trending Series', 'Trending Dramas', 'Trending Anime'];
 export const catalogSchemaVersion = 'flixora.mock.v3';
 
+export const openMovies = [
+  ['big-buck-bunny', 'Big Buck Bunny', 'BigBuckBunny.mp4', 'BigBuckBunny.jpg', 2008],
+  ['sintel', 'Sintel', 'Sintel.mp4', 'Sintel.jpg', 2010],
+  ['elephants-dream', 'Elephants Dream', 'ElephantsDream.mp4', 'ElephantsDream.jpg', 2006],
+  ['tears-of-steel', 'Tears of Steel', 'TearsOfSteel.mp4', 'TearsOfSteel.jpg', 2012],
+].map(([id, title, file, image, year], index) => ({
+  id: `blender:${id}`, title, year, type: 'Movie', category: 'Open Movies',
+  description: `${title} is a Creative Commons licensed Blender Foundation open movie.`,
+  genres: ['Open Movie', index % 2 ? 'Fantasy' : 'Animation'], rating: 7.5 + index / 10,
+  duration: 'Full movie', views: 'Open content',
+  image: `https://storage.googleapis.com/gtv-videos-bucket/sample/images/${image}`,
+  backdrop: `https://storage.googleapis.com/gtv-videos-bucket/sample/images/${image}`,
+  licenseUrl: 'https://creativecommons.org/licenses/by/3.0/',
+  attribution: `${title} — Blender Foundation Open Movie`,
+  audioTracks: ['Original'], subtitleTracks: [], qualities: ['Auto'],
+  sources: [{id: `blender-${id}`, label: 'Open Movie CDN', quality: 'Auto', type: 'video/mp4', url: `https://storage.googleapis.com/gtv-videos-bucket/sample/${file}`, audioLanguages: ['Original'], subtitles: [], isDemo: true}],
+}));
+
 const sectionDefinitions = [
   {id: 'live-sports', title: 'Live Sports & Events', subtitle: 'Cricket, football and 24/7 live channels', category: 'Live', navTags: ['Live', 'Cricket', 'Football'], layout: 'wide', type: 'Live', titles: ['Pakistan vs Australia Live', 'Champions League Night', 'PSL Super Over', 'Premier League Live', 'World Cricket Highlights', 'Formula Grand Prix', 'Tennis Centre Court', 'Flixora News 24']},
   {id: 'pakistani', title: 'Pakistani Movies & Dramas', subtitle: 'Cinema and television stories from Pakistan', category: 'Dramas', navTags: ['Movies', 'Dramas'], type: 'Drama', languages: ['Urdu', 'Punjabi'], titles: ['The Legend of Maula Jatt', 'Parizaad', 'Zindagi Gulzar Hai', 'Humsafar', 'Suno Chanda', 'Kabuli Pulao', 'Punjab Nahi Jaungi', 'Ehd-e-Wafa']},

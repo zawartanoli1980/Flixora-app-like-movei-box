@@ -8,6 +8,7 @@ import { createProfilePinService } from './pin.js';
 import { createSourceMapper, sourceDefinitionsFromConfig } from './source-mapper.js';
 import { createTmdbService } from './tmdb.js';
 import { createGeminiService } from './gemini.js';
+import { createPublicMediaService } from './public-media.js';
 
 export { createApp, loadConfig };
 
@@ -38,6 +39,7 @@ export function startServer(environment = process.env) {
     model: config.geminiModel,
     baseUrl: config.geminiApiBaseUrl,
   }) : null;
+  const publicMediaService = createPublicMediaService();
   const app = createApp({
     pool,
     authVerifier: createJwtVerifier(config),
@@ -45,6 +47,7 @@ export function startServer(environment = process.env) {
     pinService: createProfilePinService(config),
     tmdbService,
     geminiService,
+    publicMediaService,
     config,
   });
   const server = app.listen(config.port, '0.0.0.0', () => {

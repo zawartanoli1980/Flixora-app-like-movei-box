@@ -138,6 +138,24 @@ test('Gemini chat validates input and uses only the injected backend service', a
   });
 });
 
+test('public media route validates limits and returns provider results', async () => {
+  const calls = [];
+  const publicMediaService = {
+    async list(options) {
+      calls.push(options);
+      return {items: [{id: 'archive:legal-film', title: 'Legal Film'}], source: 'internet-archive', cached: false};
+    },
+  };
+  await withServer({publicMediaService}, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/v1/public-media?limit=6`);
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).items[0].id, 'archive:legal-film');
+    assert.equal(calls[0].limit, 6);
+    const invalid = await fetch(`${baseUrl}/api/v1/public-media?limit=100`);
+    assert.equal(invalid.status, 400);
+  });
+});
+
 test('TMDB routes validate input and dispatch normalized service options', async () => {
   const calls = [];
   const tmdbService = {

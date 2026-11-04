@@ -37,6 +37,7 @@ const DEMO_SOURCES = [
 function isSafeMediaUrl(value) {
   if (typeof value !== 'string' || !value.trim()) return false;
   if (value.startsWith('/')) return !value.startsWith('//');
+  if (value.startsWith('./')) return !value.includes('..') && !value.startsWith('.//');
   try {
     return new URL(value).protocol === 'https:';
   } catch {

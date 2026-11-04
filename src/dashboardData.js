@@ -1,3 +1,5 @@
+import {localMedia} from './generatedLocalMedia';
+
 const DEMO_STREAMS = [
   {id: 'cdn-auto', label: 'Fast CDN', quality: 'Auto', type: 'video/mp4', url: 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', audioLanguages: ['English', 'Urdu', 'Hindi'], subtitles: [{language: 'English', label: 'English'}, {language: 'Urdu', label: 'Urdu'}], isDemo: true},
   {id: 'cdn-4k', label: 'Ultra Server', quality: '4K', type: 'video/mp4', url: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4', audioLanguages: ['English', 'Hindi'], subtitles: [{language: 'English', label: 'English'}], isDemo: true},
@@ -130,11 +132,25 @@ function createItem(definition, itemIndex, sectionIndex) {
   };
 }
 
-export const sections = sectionDefinitions.map((definition, sectionIndex) => ({
+const generatedSections = sectionDefinitions.map((definition, sectionIndex) => ({
   ...definition,
   layout: definition.layout || (definition.type === 'Novel' ? 'novel' : definition.type === 'Game' ? 'wide' : 'poster'),
   items: definition.titles.map((_, itemIndex) => createItem(definition, itemIndex, sectionIndex)),
 }));
+
+export const sections = [
+  ...(localMedia.length ? [{
+    id: 'my-imported-videos',
+    title: 'My Imported Videos',
+    subtitle: 'Your authorized local MP4 and WebM library',
+    category: 'Movies',
+    navTags: ['Home', 'Movies'],
+    layout: 'poster',
+    type: 'Movie',
+    items: localMedia,
+  }] : []),
+  ...generatedSections,
+];
 
 export const contentCatalog = sections.flatMap(section => section.items);
 

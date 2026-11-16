@@ -134,9 +134,77 @@ try {
       path: join(process.env.SCREENSHOT_DIR, "flixora-mobile.png"),
       fullPage: true,
     });
+  await page
+    .getByRole("button", { name: "Administration", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Demo catalog", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Add 240 demo previews", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Hide demos", exact: true }).waitFor();
+  await page.getByRole("button", { name: "Discover", exact: true }).click();
+  await page.getByRole("button", { name: "All content", exact: true }).click();
+  await page
+    .getByRole("button", { name: "View demo", exact: true })
+    .first()
+    .waitFor();
+  assert.equal(
+    await page.getByRole("button", { name: "View demo", exact: true }).count(),
+    240,
+  );
+  assert.equal(
+    await page
+      .getByRole("button", { name: "My list unavailable for demo previews" })
+      .first()
+      .isDisabled(),
+    true,
+  );
+  await page.getByRole("button", { name: "Drama series", exact: true }).click();
+  await page
+    .getByRole("button", { name: "View demo", exact: true })
+    .first()
+    .click();
+  const preview = page.getByRole("dialog", { name: "Demo metadata preview" });
+  await preview.waitFor();
+  assert.equal(await preview.locator("video").count(), 0);
+  assert.equal(
+    await preview.getByText("Demo · No video", { exact: true }).count(),
+    6,
+  );
+  await page.getByRole("button", { name: "Close demo preview" }).click();
+  await page.getByRole("button", { name: "All content", exact: true }).click();
+  assert.equal(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth > innerWidth,
+    ),
+    false,
+  );
+  if (process.env.SCREENSHOT_DIR) {
+    await page.screenshot({
+      path: join(process.env.SCREENSHOT_DIR, "flixora-demo-mobile.png"),
+    });
+    await page.setViewportSize({ width: 1440, height: 1200 });
+    await page.screenshot({
+      path: join(process.env.SCREENSHOT_DIR, "flixora-demo-desktop.png"),
+    });
+  }
+  await page
+    .getByRole("button", { name: "Administration", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Demo catalog", exact: true }).click();
+  await page.getByRole("button", { name: "Hide demos", exact: true }).click();
+  await page.getByRole("button", { name: "Show demos", exact: true }).waitFor();
+  await page.getByRole("button", { name: "Discover", exact: true }).click();
+  await page
+    .getByRole("heading", { name: "Browser validation fixture", exact: true })
+    .waitFor();
+  assert.equal(
+    await page.getByRole("button", { name: "View demo", exact: true }).count(),
+    0,
+  );
   assert.deepEqual(errors, []);
   console.log(
-    "Browser passed: owner login → draft → real upload → validation → publish → video decode; category isolation and mobile overflow.",
+    "Browser passed: owner login → draft → real upload → validation → publish → video decode; category isolation, owner demo controls, 240 labeled previews, sample episodes and mobile overflow.",
   );
 } finally {
   await browser.close();

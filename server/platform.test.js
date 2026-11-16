@@ -610,3 +610,156 @@ test("backup helper preserves users and schema migrations in an isolated restore
   );
   restored.db.close();
 });
+
+test("demo catalog is opt-in, idempotent and isolated from real records", async (t) => {
+  const f = await fixture(t);
+  await f.login();
+  const original = (await f.call("/admin/content", data)).data;
+  const userCount = f.db.prepare("SELECT COUNT(*) n FROM users").get().n;
+  assert.equal((await f.call("/admin/demo")).data.installed, false);
+  const first = await f.call("/admin/demo", { action: "seed" });
+  assert.equal(first.status, 200);
+  assert.equal(first.data.titleCount, 240);
+  assert.equal(first.data.episodeCount, 540);
+  const catalog = (await f.call("/catalog")).data;
+  assert.equal(catalog.items.length, 240);
+  assert.equal(new Set(catalog.items.map((i) => i.id)).size, 240);
+  assert.ok(
+    catalog.items.every(
+      (i) =>
+        i.demo &&
+        i.state === "demo" &&
+        !i.validated &&
+        i.data.authorized === false &&
+        !i.file,
+    ),
+  );
+  await f.call("/admin/demo", { action: "seed" });
+  assert.deepEqual(
+    (await f.call("/catalog")).data.items.map((i) => i.id),
+    catalog.items.map((i) => i.id),
+  );
+  assert.equal(f.db.prepare("SELECT COUNT(*) n FROM content").get().n, 1);
+  assert.equal(f.db.prepare("SELECT COUNT(*) n FROM users").get().n, userCount);
+  assert.equal((await f.call("/admin/overview")).data.coverage.length, 0);
+  await f.call("/admin/demo", { action: "hide" });
+  assert.equal((await f.call("/catalog")).data.items.length, 0);
+  assert.equal((await f.call("/admin/demo")).data.titleCount, 240);
+  await f.call("/admin/demo", { action: "show" });
+  assert.equal((await f.call("/catalog")).data.items.length, 240);
+  await f.call("/admin/demo", { action: "clear" });
+  assert.equal((await f.call("/catalog")).data.items.length, 0);
+  assert.equal(
+    f.db.prepare("SELECT title FROM content WHERE id=?").get(original.id).title,
+    data.title,
+  );
+  assert.equal(f.db.prepare("SELECT COUNT(*) n FROM grants").get().n, 0);
+});
+
+test("only owner settings permission can create or remove demo previews", async (t) => {
+  const f = await fixture(t);
+  assert.equal((await f.call("/admin/demo", { action: "seed" })).status, 401);
+  await f.login();
+  await f.call("/admin/users", {
+    email: "demo-manager@example.test",
+    password: "manager-password-123",
+    role: "content_manager",
+  });
+  await f.login("demo-manager@example.test", "manager-password-123");
+  assert.equal((await f.call("/admin/demo")).status, 403);
+  assert.equal((await f.call("/admin/demo", { action: "seed" })).status, 403);
+  await f.login();
+  assert.equal(
+    (await f.call("/admin/demo", { action: "invalid" })).status,
+    400,
+  );
+});
+
+test("demo sections, real search filters and nested sample episodes stay consistent", async (t) => {
+  const f = await fixture(t);
+  await f.login();
+  await f.call("/admin/demo", { action: "seed" });
+  for (const section of [
+    "movies",
+    "drama",
+    "tv",
+    "anime",
+    "cartoons",
+    "cricket",
+    "sports",
+    "videos",
+  ]) {
+    const items = (await f.call("/catalog?section=" + section)).data.items;
+    assert.equal(items.length, 30);
+    assert.ok(
+      items.every(
+        (item) => item.section === section && item.data.section === section,
+      ),
+    );
+  }
+  const filtered = (
+    await f.call(
+      "/catalog?section=movies&q=Amber%20Horizon&language=en&year=2018&country=US&genre=Adventure",
+    )
+  ).data.items;
+  assert.equal(filtered.length, 1);
+  assert.equal(filtered[0].id, "demo-movies-01");
+  const preview = (await f.call("/demo/demo-drama-01")).data;
+  assert.equal(preview.episodes.length, 6);
+  assert.deepEqual(
+    [...new Set(preview.episodes.map((e) => e.data.season))],
+    [1, 2],
+  );
+  assert.ok(
+    preview.episodes.every(
+      (e) =>
+        e.section === "drama" && e.data.parentId === preview.item.id && e.demo,
+    ),
+  );
+});
+
+test("demo metadata never becomes a playable video or real viewing history", async (t) => {
+  const f = await fixture(t);
+  await f.login();
+  await f.call("/admin/demo", { action: "seed" });
+  assert.equal((await f.call("/media/demo-movies-01")).status, 409);
+  assert.equal((await f.call("/media/demo-drama-01-s1-e1")).status, 409);
+  assert.equal(
+    (await f.call("/library/demo-movies-01", { listed: true })).status,
+    409,
+  );
+  assert.equal(
+    (
+      await f.call("/admin/content/demo-movies-01/state", {
+        state: "published",
+      })
+    ).status,
+    404,
+  );
+  assert.equal((await f.call("/library")).data.progress.length, 0);
+  assert.equal(
+    (await f.call("/checkout", { demoId: "demo-movies-01" })).status,
+    503,
+  );
+});
+
+test("Kids maturity restrictions also apply to demo previews and direct preview requests", async (t) => {
+  const f = await fixture(t);
+  await f.login();
+  await f.call("/admin/demo", { action: "seed" });
+  const kid = (
+    await f.call("/profiles", {
+      name: "Demo Kids",
+      kids: true,
+      maxAge: 7,
+      password: "test-password-long",
+    })
+  ).data;
+  await f.call("/profiles/" + kid.id + "/select", {});
+  assert.ok(
+    (await f.call("/catalog")).data.items.every((i) => i.data.ageRating <= 7),
+  );
+  assert.equal((await f.call("/catalog?section=drama")).data.items.length, 0);
+  assert.equal((await f.call("/demo/demo-drama-01")).status, 404);
+  assert.equal((await f.call("/demo/demo-cartoons-01")).status, 200);
+});

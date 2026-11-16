@@ -17,7 +17,7 @@ const server = createPlatformApp(store).listen(
       store.db.close();
     } else
       console.log(
-        "Flixora real-content API listening; no demo catalog enabled.",
+        "Flixora API listening. Demo previews, when enabled, are labeled separately.",
       );
   },
 );

@@ -15,7 +15,10 @@
     "check": "npm test && npm run build && npm run typecheck:mobile",
     "api:legacy": "node --env-file-if-exists=.env server/index.js",
     "owner:create": "node --env-file-if-exists=.env scripts/create-owner.mjs",
-    "test:browser": "node scripts/test-platform-browser.mjs"
+    "test:browser": "node scripts/test-platform-browser.mjs",
+    "demo:seed": "node --env-file-if-exists=.env scripts/demo-catalog.mjs seed",
+    "demo:clear": "node --env-file-if-exists=.env scripts/demo-catalog.mjs clear",
+    "demo:hide": "node --env-file-if-exists=.env scripts/demo-catalog.mjs hide"
   },
   "dependencies": {
     "express": "^5.1.0",

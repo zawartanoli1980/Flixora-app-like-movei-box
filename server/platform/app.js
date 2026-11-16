@@ -1,3 +1,4 @@
+import { registerDemo, demoTitles, demoStatus } from "./demo-catalog.js";
 import express from "express";
 import { createMailer, emailConfigured, registerEmail } from "./email.js";
 import { initializeProfile, registerProfiles } from "./profiles.js";
@@ -166,6 +167,7 @@ export function createPlatformApp({
   };
   registerGoogle(app, { db, session, secureCookies });
   registerSettings(app, { db, permit });
+  registerDemo(app, { db, permit });
   registerProfiles(app, { db, auth });
   const loginLimiter = rateLimit({ windowMs: 15 * 60000, limit: 20 });
   registerEmail(app, { db, mailer, limiter: loginLimiter });
@@ -178,6 +180,7 @@ export function createPlatformApp({
   app.get("/api/platform/status", (_req, res) =>
     res.json({
       sections,
+      features: { demoCatalog: true },
       integrations: {
         google: {
           status: googleConfigured()
@@ -275,9 +278,17 @@ export function createPlatformApp({
           (!d.regions.length || d.regions.includes(region))
         );
       });
+    items = items.map(unpack);
+    items.push(
+      ...demoTitles(db).filter(
+        (item) =>
+          (!section || item.section === section) &&
+          (!req.profile || item.data.ageRating <= req.profile.max_age),
+      ),
+    );
     const q = String(req.query.q || "").toLowerCase();
     items = items.filter((r) => {
-      const d = JSON.parse(r.data);
+      const d = r.data;
       return (
         (!req.query.language || d.language === req.query.language) &&
         (!req.query.year ||
@@ -287,11 +298,9 @@ export function createPlatformApp({
       );
     });
     items = items.filter((r) =>
-      (r.title + " " + JSON.parse(r.data).description)
-        .toLowerCase()
-        .includes(q),
+      (r.title + " " + r.data.description).toLowerCase().includes(q),
     );
-    res.json({ items: items.map(unpack), total: items.length });
+    res.json({ items, total: items.length, demo: demoStatus(db) });
   });
   app.get("/api/platform/series/:id/episodes", (req, res) => {
     const parent = record(req.params.id);
@@ -340,6 +349,12 @@ export function createPlatformApp({
     res.sendFile(file);
   });
   app.get("/api/platform/media/:id", (req, res) => {
+    if (req.params.id.startsWith("demo-"))
+      return res
+        .status(409)
+        .json({
+          error: "Demo metadata preview only. No playable video is attached.",
+        });
     const item = record(req.params.id);
     const details = JSON.parse(item.data);
     if (details.kind === "series")
@@ -400,6 +415,12 @@ export function createPlatformApp({
     }),
   );
   app.post("/api/platform/library/:id", auth, selected, (req, res) => {
+    if (req.params.id.startsWith("demo-"))
+      return res
+        .status(409)
+        .json({
+          error: "Demo previews cannot be saved as real viewing activity.",
+        });
     const item = record(req.params.id);
     if (JSON.parse(item.data).ageRating > req.profile.max_age)
       return res.status(403).json({ error: "Profile maturity restriction" });

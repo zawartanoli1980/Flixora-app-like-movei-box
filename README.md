@@ -1,8 +1,16 @@
 # Flixora
 
-Flixora now starts an empty, persistent streaming library with a protected content workspace. The original dark branding is retained. The active website does not load the old demo catalog, fabricated viewing statistics, sample movie links or simulated downloads.
+Flixora now starts an empty, persistent streaming library with a protected content workspace. The original dark branding is retained. The active website does not load the old demo catalog, fabricated viewing statistics, sample movie links or simulated downloads. An owner can explicitly enable the separate fictional demo preview catalog described below.
 
 This is the first functional delivery stage, **not a complete production streaming service**. See [implementation and integration checklist](docs/PLATFORM_DELIVERY.md) for precise boundaries and remaining work.
+
+## Optional large demo catalog
+
+To test the interface with sample data, sign in as owner and open **Admin → Demo catalog → Add 240 demo previews**. This adds 30 fictional title previews to each of the eight primary libraries, plus 540 sample episodes under fictional series. Every card is labeled **Demo**, its artwork is generated locally, and its button opens metadata instead of a player. No movie files, customer accounts, viewing statistics or payment records are fabricated.
+
+From the repository root, you can also run `npm run demo:seed`, `npm run demo:hide` or `npm run demo:clear`. Seeding is repeatable and creates no duplicates. Hiding/removing demos only affects the demo catalog; your real titles, uploads, owner login and settings remain intact. Nothing is seeded automatically during installation or startup.
+
+On Windows, `ADD-DEMO.cmd` seeds previews and opens the app; `START-FLIXORA.cmd` starts the two servers without changing your PowerShell execution policy. See [demo data and Windows update instructions](docs/DEMO_CATALOG.md).
 
 ## Run locally
 

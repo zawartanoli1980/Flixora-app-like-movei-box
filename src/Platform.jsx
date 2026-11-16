@@ -70,6 +70,8 @@ function App() {
       country: "",
     }),
     [items, setItems] = useState([]),
+    [demo, setDemo] = useState({ enabled: false }),
+    [preview, setPreview] = useState(null),
     [error, setError] = useState(""),
     [login, setLogin] = useState(false),
     [series, setSeries] = useState(null),
@@ -84,7 +86,10 @@ function App() {
   const refresh = () => {
     setLoading(true);
     api("/catalog?" + new URLSearchParams({ ...filters, section, q }))
-      .then((d) => setItems(d.items))
+      .then((d) => {
+        setItems(d.items);
+        setDemo(d.demo || { enabled: false });
+      })
       .catch((e) => {
         setItems([]);
         setError(e.message);
@@ -211,6 +216,19 @@ function App() {
       {settings.announcement && (
         <div className="notice">{settings.announcement}</div>
       )}
+      {demo.enabled && (
+        <div className="notice demo-notice">
+          <Library size={18} />
+          <div>
+            <strong>Demo catalog enabled</strong>
+            <span>
+              {demo.titleCount} fictional titles and {demo.episodeCount} sample
+              episodes. Metadata previews only; no playable movies or live
+              streams are attached.
+            </span>
+          </div>
+        </div>
+      )}
       {error && !login && !player && (
         <div role="alert" className="notice error">
           <AlertCircle size={17} />
@@ -275,7 +293,9 @@ function App() {
                 <p>
                   Movies, series, anime and the moments that matter.
                   <br />
-                  Explore content from connected, authorized sources.
+                  {demo.enabled
+                    ? "Browse fictional previews, then connect your authorized media."
+                    : "Explore content from connected, authorized sources."}
                 </p>
                 <button
                   className="btn primary"
@@ -319,8 +339,12 @@ function App() {
                   </h2>
                 </div>
                 <span className="subtle">
-                  {items.length} published{" "}
-                  {items.length === 1 ? "title" : "titles"}
+                  {items.filter((i) => !i.demo).length} published{" "}
+                  {items.filter((i) => !i.demo).length === 1
+                    ? "title"
+                    : "titles"}
+                  {items.some((i) => i.demo) &&
+                    ` · ${items.filter((i) => i.demo).length} demo previews`}
                 </span>
               </div>
               <details className="filter-panel">
@@ -413,24 +437,33 @@ function App() {
                         library.watchlist.some((w) => w.content_id === i.id),
                     )
                     .map((i) => (
-                      <article className="content-card" key={i.id}>
-                        <div className="content-art">
-                          <img
-                            alt=""
-                            src={"/api/platform/artwork/" + i.id}
-                            onError={(e) => {
-                              e.currentTarget.style.display = "none";
-                            }}
-                          />
-                          <Clapperboard size={44} />
-                          <span>{sections[i.section]}</span>
-                        </div>
+                      <article
+                        className={`content-card ${i.demo ? "demo-card" : ""}`}
+                        key={i.id}
+                      >
+                        {i.demo ? (
+                          <DemoPoster item={i} />
+                        ) : (
+                          <div className="content-art">
+                            <img
+                              alt=""
+                              src={"/api/platform/artwork/" + i.id}
+                              onError={(e) => {
+                                e.currentTarget.style.display = "none";
+                              }}
+                            />
+                            <Clapperboard size={44} />
+                            <span>{sections[i.section]}</span>
+                          </div>
+                        )}
                         <div className="card-body">
                           <span className="eyebrow">
-                            {settings.mode === "premium" ||
-                            (settings.mode !== "free" && i.data.premium)
-                              ? "PREMIUM"
-                              : "FREE"}{" "}
+                            {i.demo
+                              ? "DEMO · METADATA ONLY"
+                              : settings.mode === "premium" ||
+                                  (settings.mode !== "free" && i.data.premium)
+                                ? "PREMIUM"
+                                : "FREE"}{" "}
                             · {i.data.language}
                           </span>
                           <h3>{i.title}</h3>
@@ -440,7 +473,11 @@ function App() {
                               className="btn primary"
                               onClick={() => {
                                 setError("");
-                                if (i.data.kind === "series")
+                                if (i.demo)
+                                  act(async () =>
+                                    setPreview(await api("/demo/" + i.id)),
+                                  );
+                                else if (i.data.kind === "series")
                                   act(async () => {
                                     const response = await api(
                                       "/series/" + i.id + "/episodes",
@@ -454,12 +491,30 @@ function App() {
                                 }
                               }}
                             >
-                              <Play size={15} />
-                              {i.data.kind === "series" ? "Episodes" : "Watch"}
+                              {i.demo ? (
+                                <Library size={15} />
+                              ) : (
+                                <Play size={15} />
+                              )}
+                              {i.demo
+                                ? "View demo"
+                                : i.data.kind === "series"
+                                  ? "Episodes"
+                                  : "Watch"}
                             </button>
                             <button
                               className="icon-btn"
-                              aria-label="Toggle My list"
+                              disabled={Boolean(i.demo)}
+                              title={
+                                i.demo
+                                  ? "Demo previews do not represent playable media and cannot be saved to My list"
+                                  : undefined
+                              }
+                              aria-label={
+                                i.demo
+                                  ? "My list unavailable for demo previews"
+                                  : "Toggle My list"
+                              }
                               onClick={() =>
                                 user
                                   ? act(async () => {
@@ -505,8 +560,10 @@ function App() {
                       : "No published content is available here yet. Titles appear only after authorized media is uploaded, validated and published."}
                   </p>
                   <div className="empty-foot">
-                    <CheckCircle2 size={15} /> Real content only. No demo
-                    movies.
+                    <CheckCircle2 size={15} />{" "}
+                    {demo.enabled
+                      ? "Demo previews contain metadata only."
+                      : "Real content only. No demo movies."}
                   </div>
                 </div>
               )}
@@ -768,6 +825,9 @@ function App() {
           </section>
         </div>
       )}
+      {preview && (
+        <DemoPreview preview={preview} onClose={() => setPreview(null)} />
+      )}
       {series && (
         <div className="modal-overlay">
           <section className="dialog wide">
@@ -977,6 +1037,7 @@ function Admin({ user, act, status }) {
       "imports",
       "users",
       "grants",
+      "demo",
       "settings",
       "audit",
       "connections",
@@ -1095,11 +1156,14 @@ function Admin({ user, act, status }) {
                   grants: <CreditCard size={17} />,
                   audit: <Shield size={17} />,
                   connections: <Settings size={17} />,
+                  demo: <Library size={17} />,
                 }[t]
               }
-              {t === "grants"
-                ? "Complimentary access"
-                : t[0].toUpperCase() + t.slice(1)}
+              {t === "demo"
+                ? "Demo catalog"
+                : t === "grants"
+                  ? "Complimentary access"
+                  : t[0].toUpperCase() + t.slice(1)}
             </button>
           ))}
         </nav>
@@ -1115,16 +1179,20 @@ function Admin({ user, act, status }) {
           <div>
             <span className="eyebrow">FLIXORA ADMINISTRATION</span>
             <h1>
-              {tab === "overview"
-                ? "Your platform, at a glance."
-                : tab === "content"
-                  ? "Content library"
-                  : tab === "grants"
-                    ? "Complimentary access"
-                    : tab[0].toUpperCase() + tab.slice(1)}
+              {tab === "demo"
+                ? "Demo catalog"
+                : tab === "overview"
+                  ? "Your platform, at a glance."
+                  : tab === "content"
+                    ? "Content library"
+                    : tab === "grants"
+                      ? "Complimentary access"
+                      : tab[0].toUpperCase() + tab.slice(1)}
             </h1>
           </div>
-          <span className="status-badge">Live data</span>
+          <span className="status-badge">
+            {tab === "demo" ? "Fictional previews" : "Live data"}
+          </span>
         </div>
         {tab === "connections" ? (
           <Connections status={status} />
@@ -1132,6 +1200,12 @@ function Admin({ user, act, status }) {
           <p className="subtle" role={loadError ? "alert" : undefined}>
             {loadError || "Loading authorized workspace…"}
           </p>
+        ) : tab === "demo" ? (
+          <DemoPanel
+            data={data}
+            act={act}
+            refresh={() => setRefresh((x) => x + 1)}
+          />
         ) : tab === "overview" ? (
           <>
             <div className="stat-grid">
@@ -2350,6 +2424,161 @@ function Account({ act, onChange }) {
           <button className="btn secondary">Permanently delete account</button>
         </form>
       </section>
+    </>
+  );
+}
+
+function DemoPoster({ item }) {
+  return (
+    <div
+      className={`demo-poster demo-pattern-${item.data.variant}`}
+      style={{ "--demo-color": item.data.color }}
+    >
+      <span className="demo-label">DEMO</span>
+      <span className="demo-series-label">{sections[item.section]}</span>
+      <div className="demo-orb" />
+      <div className="demo-orb second" />
+      <div className="demo-poster-title">{item.title}</div>
+      <span className="demo-poster-caption">
+        FICTIONAL CATALOG · {String(item.data.sequence).padStart(3, "0")}
+      </span>
+    </div>
+  );
+}
+function DemoPreview({ preview, onClose }) {
+  const { item, episodes } = preview;
+  return (
+    <div className="modal-overlay">
+      <section
+        className="dialog wide demo-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Demo metadata preview"
+      >
+        <button
+          className="close icon-btn"
+          aria-label="Close demo preview"
+          onClick={onClose}
+        >
+          <X />
+        </button>
+        <span className="eyebrow">DEMO · FICTIONAL METADATA</span>
+        <h2>{item.title}</h2>
+        <p>{item.data.description}</p>
+        <div className="demo-facts">
+          <span>{sections[item.section]}</span>
+          <span>{item.data.language}</span>
+          <span>Sample release: {item.data.releaseDate}</span>
+          <span>Sample age rating: {item.data.ageRating}+</span>
+          <span>{item.data.genres.join(", ")}</span>
+        </div>
+        <div className="notice demo-warning">
+          <AlertCircle size={18} />
+          <span>
+            This is a fictional preview. No video, stream, real event or
+            distribution license is attached. Upload your own authorized media
+            as a real content draft to test playback.
+          </span>
+        </div>
+        {episodes.length > 0 && (
+          <>
+            <h3>Sample seasons and episodes</h3>
+            <p>Fictional episode metadata. These entries are not playable.</p>
+            {episodes.map((e) => (
+              <div key={e.id} className="job-row">
+                <div>
+                  <strong>{e.title}</strong>
+                  <p>
+                    Season {e.data.season} · Episode {e.data.episode}
+                  </p>
+                </div>
+                <span className="status-badge">Demo · No video</span>
+              </div>
+            ))}
+          </>
+        )}
+        <button className="btn secondary" onClick={onClose}>
+          Back to library
+        </button>
+      </section>
+    </div>
+  );
+}
+function DemoPanel({ data, act, refresh }) {
+  return (
+    <>
+      <section className="panel">
+        <h3>Populate the design with fictional previews</h3>
+        <p>
+          Add 240 fictional titles across all eight primary sections and 540
+          sample episodes. No real movie files, live streams, customer accounts,
+          financial records or viewing statistics are generated. Real uploads
+          remain separate.
+        </p>
+        <div className="stat-grid">
+          <Stat title="Demo title previews" value={data.titleCount} />
+          <Stat title="Sample episodes" value={data.episodeCount} />
+          <div className="stat">
+            <span>Public demo catalog</span>
+            <strong style={{ fontSize: 22 }}>
+              {data.enabled ? "Enabled" : "Hidden"}
+            </strong>
+            <small>Explicit demo labels on every card</small>
+          </div>
+        </div>
+        <div className="button-row">
+          <button
+            className="btn primary"
+            onClick={() =>
+              act(async () => {
+                await api("/admin/demo", { action: "seed" });
+                refresh();
+              })
+            }
+          >
+            {data.installed ? "Refresh demo catalog" : "Add 240 demo previews"}
+          </button>
+          {data.installed && (
+            <>
+              <button
+                className="btn secondary"
+                onClick={() =>
+                  act(async () => {
+                    await api("/admin/demo", {
+                      action: data.enabled ? "hide" : "show",
+                    });
+                    refresh();
+                  })
+                }
+              >
+                {data.enabled ? "Hide demos" : "Show demos"}
+              </button>
+              <button
+                className="btn secondary"
+                onClick={() =>
+                  act(async () => {
+                    await api("/admin/demo", { action: "clear" });
+                    refresh();
+                  })
+                }
+              >
+                Remove demo previews
+              </button>
+            </>
+          )}
+        </div>
+      </section>
+      {data.installed && (
+        <section className="panel">
+          <h3>Demo library coverage</h3>
+          {Object.entries(data.sections).map(([key, count]) => (
+            <div className="table-row" key={key}>
+              <span>{sections[key]}</span>
+              <strong>{count} fictional titles</strong>
+            </div>
+          ))}
+        </section>
+      )}
     </>
   );
 }

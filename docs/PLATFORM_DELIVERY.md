@@ -5,7 +5,7 @@
 | Area | Implemented |
 | --- | --- |
 | Active public website | Responsive dark Flixora design, eight exclusive primary libraries, search, honest empty states, connection status, real uploaded-media cards, generated thumbnails, native video controls |
-| Database | Private SQLite WAL database, transactional numbered migrations with checksum tracking; no seed titles/accounts |
+| Database | Private SQLite WAL database, transactional numbered migrations with checksum tracking; no automatic seed titles/accounts; explicit owner-controlled fictional preview catalog |
 | Administration | Owner, Administrator, Content Manager, Finance, Support permission maps; API authorization; owner-only staff provisioning; actual counts and coverage; audit records |
 | Manual media | 4 MiB resumable chunks, offset/size validation, MP4/WebM restriction, 20 GiB limit, private random filenames, durable jobs, ffprobe inspection, representative ffmpeg decode, generated thumbnails, review/publish/archive and editable metadata |
 | Rights | Required authorization assertion and reference, start/end windows, trusted serving-region restrictions, expiry/missing-file unpublishing, daily decode rechecks, server checks on every media request |
@@ -77,6 +77,8 @@ Restore with the API stopped: preserve the current data directory outside the se
 
 - Existing API regression suite plus real-platform tests cover permissions, exact categories, uploads, real decoding, HTTP Range responses, source path/symlink restrictions, imports/dedup/review, premium expiry/revocation, session suspension, Kids profile isolation, PIN lockout, immutable prepaid plan definitions, email verification/reset and rejection of unverified payment events.
 - Chromium end-to-end uses a temporary database/account/video and checks owner login → draft → upload → decode → review → publish → actual browser playback; category isolation and mobile horizontal overflow.
+- Optional demo mode contains 240 labeled fictional title previews and 540 sample episodes, not playable media. Real catalog metrics exclude these entries.
+
 - No successful Google login, real email delivery, charge, webhook signature validation, paid subscription, licensed distributor import, CDN stream or native-device behavior is claimed by these local tests.
 
 Playback authorization is checked on each new media/Range request. Previously buffered video and an already-open authorized response are not forcibly recalled when a grant expires. Production DRM/session services are needed for stronger ongoing enforcement.

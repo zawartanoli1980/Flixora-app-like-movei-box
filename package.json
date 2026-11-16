@@ -5,14 +5,17 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
-    "build": "vite build && node scripts/build-standalone.mjs",
+    "build": "vite build",
     "import:videos": "node scripts/import-local-videos.mjs",
     "preview": "vite preview --host 0.0.0.0",
-    "api": "node --env-file-if-exists=.env server/index.js",
+    "api": "node --env-file-if-exists=.env server/platform/index.js",
     "start": "vite preview --host 0.0.0.0",
     "test": "node --test server/*.test.js",
     "typecheck:mobile": "npm --prefix mobile run typecheck",
-    "check": "npm test && npm run build && npm run typecheck:mobile"
+    "check": "npm test && npm run build && npm run typecheck:mobile",
+    "api:legacy": "node --env-file-if-exists=.env server/index.js",
+    "owner:create": "node --env-file-if-exists=.env scripts/create-owner.mjs",
+    "test:browser": "node scripts/test-platform-browser.mjs"
   },
   "dependencies": {
     "express": "^5.1.0",
@@ -21,6 +24,7 @@
     "hls.js": "^1.6.0",
     "jose": "^6.1.0",
     "lucide-react": "^0.468.0",
+    "nodemailer": "^10.6.0",
     "pg": "^8.16.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
@@ -28,10 +32,11 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.4",
+    "playwright": "^1.65.1",
     "tailwindcss": "^4.3.4",
     "vite": "^7.2.0"
   },
   "engines": {
-    "node": ">=22.12.0"
+    "node": ">=24.0.0"
   }
 }

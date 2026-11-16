@@ -1,13 +1,13 @@
-import {defineConfig} from 'vite';
-import tailwindcss from '@tailwindcss/vite';
+import { defineConfig } from "vite";
+import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
-  base: './',
+  base: "./",
   plugins: [tailwindcss()],
   server: {
     proxy: {
-      '/api': {
-        target: 'http://127.0.0.1:3001',
+      "/api": {
+        target: process.env.FLIXORA_API_TARGET || "http://127.0.0.1:3201",
         changeOrigin: false,
       },
     },

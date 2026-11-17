@@ -644,7 +644,10 @@ test("demo catalog is opt-in, idempotent and isolated from real records", async 
   assert.equal((await f.call("/admin/overview")).data.coverage.length, 0);
   await f.call("/admin/demo", { action: "hide" });
   assert.equal((await f.call("/catalog")).data.items.length, 0);
-  assert.equal((await f.call("/admin/demo")).data.titleCount, 800);
+  const hidden = (await f.call("/admin/demo")).data;
+  assert.equal(hidden.titleCount, 800);
+  assert.equal(hidden.items.length, 800);
+  assert.equal(hidden.items[0].title, "Amber Horizon");
   await f.call("/admin/demo", { action: "show" });
   assert.equal((await f.call("/catalog")).data.items.length, 800);
   await f.call("/admin/demo", { action: "clear" });

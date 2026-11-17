@@ -144,6 +144,14 @@ try {
   await page.getByRole("button", { name: "Hide demos", exact: true }).waitFor();
   await page.getByText("800", { exact: true }).waitFor();
   await page.getByText("1800", { exact: true }).waitFor();
+  await page.getByText("Showing 25 of 800 demo titles", { exact: true }).waitFor();
+  await page.getByRole("button", { name: "Load more demo titles" }).click();
+  await page.getByText("Showing 50 of 800 demo titles", { exact: true }).waitFor();
+  await page.getByLabel("Demo category").selectOption("movies");
+  await page.getByText("Showing 25 of 100 demo titles", { exact: true }).waitFor();
+  await page.getByLabel("Search demo titles").fill("Amber Horizon");
+  await page.getByText("Showing 1 of 1 demo titles", { exact: true }).waitFor();
+  await page.getByText("Amber Horizon", { exact: true }).waitFor();
   await page.getByRole("button", { name: "Discover", exact: true }).click();
   await page.getByRole("button", { name: "All content", exact: true }).click();
   await page

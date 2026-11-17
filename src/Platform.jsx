@@ -2522,6 +2522,16 @@ function DemoPreview({ preview, onClose }) {
   );
 }
 function DemoPanel({ data, act, refresh }) {
+  const [section, setSection] = useState("");
+  const [query, setQuery] = useState("");
+  const [limit, setLimit] = useState(25);
+  const search = query.trim().toLowerCase();
+  const matches = (data.items || []).filter(
+    (item) =>
+      (!section || item.section === section) &&
+      item.title.toLowerCase().includes(search),
+  );
+  const visible = matches.slice(0, limit);
   return (
     <>
       <section className="panel">
@@ -2593,6 +2603,66 @@ function DemoPanel({ data, act, refresh }) {
               <strong>{count} fictional titles</strong>
             </div>
           ))}
+          <h3>Demo titles</h3>
+          <div className="filter-fields">
+            <label>
+              Search demo titles
+              <input
+                type="search"
+                value={query}
+                onChange={(event) => {
+                  setQuery(event.target.value);
+                  setLimit(25);
+                }}
+              />
+            </label>
+            <label>
+              Demo category
+              <select
+                value={section}
+                onChange={(event) => {
+                  setSection(event.target.value);
+                  setLimit(25);
+                }}
+              >
+                <option value="">All categories</option>
+                {Object.entries(sections).map(([key, label]) => (
+                  <option key={key} value={key}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          {visible.length ? (
+            <>
+              <p className="subtle">
+                Showing {visible.length} of {matches.length} demo titles
+              </p>
+              {visible.map((item) => (
+                <div key={item.id} className="table-row">
+                  <div>
+                    <strong>{item.title}</strong>
+                    <small>
+                      {sections[item.section]} · {item.kind} · {item.language} ·{" "}
+                      {item.releaseDate.slice(0, 4)}
+                    </small>
+                  </div>
+                  <span className="status-badge">Demo</span>
+                </div>
+              ))}
+              {visible.length < matches.length && (
+                <button
+                  className="btn secondary"
+                  onClick={() => setLimit((count) => count + 25)}
+                >
+                  Load more demo titles
+                </button>
+              )}
+            </>
+          ) : (
+            <p>No demo titles match your search.</p>
+          )}
         </section>
       )}
     </>

@@ -328,6 +328,14 @@ function makeCatalog() {
   return { titles, episodes };
 }
 const catalog = makeCatalog();
+const adminTitles = catalog.titles.map(({ id, title, section, data }) => ({
+  id,
+  title,
+  section,
+  kind: data.kind,
+  language: data.language,
+  releaseDate: data.releaseDate,
+}));
 export function demoStatus(db) {
   const config = JSON.parse(
     db.prepare("SELECT value FROM settings WHERE key=?").get(settingKey)
@@ -393,9 +401,10 @@ export function configureDemo(db, action, actor = "local-cli") {
   return demoStatus(db);
 }
 export function registerDemo(app, { db, permit }) {
-  app.get("/api/platform/admin/demo", permit("settings"), (_req, res) =>
-    res.json(demoStatus(db)),
-  );
+  app.get("/api/platform/admin/demo", permit("settings"), (_req, res) => {
+    const status = demoStatus(db);
+    res.json({ ...status, items: status.installed ? adminTitles : [] });
+  });
   app.post("/api/platform/admin/demo", permit("settings"), (req, res) => {
     const { action } = z
       .object({ action: z.enum(["seed", "show", "hide", "clear"]) })

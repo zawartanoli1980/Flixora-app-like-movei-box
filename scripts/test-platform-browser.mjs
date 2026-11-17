@@ -139,18 +139,21 @@ try {
     .click();
   await page.getByRole("button", { name: "Demo catalog", exact: true }).click();
   await page
-    .getByRole("button", { name: "Add 240 demo previews", exact: true })
+    .getByRole("button", { name: "Add demo previews", exact: true })
     .click();
   await page.getByRole("button", { name: "Hide demos", exact: true }).waitFor();
+  await page.getByText("800", { exact: true }).waitFor();
+  await page.getByText("1800", { exact: true }).waitFor();
   await page.getByRole("button", { name: "Discover", exact: true }).click();
   await page.getByRole("button", { name: "All content", exact: true }).click();
   await page
     .getByRole("button", { name: "View demo", exact: true })
     .first()
     .waitFor();
+  await page.getByText("Showing 48 of 801 titles", { exact: true }).waitFor();
   assert.equal(
     await page.getByRole("button", { name: "View demo", exact: true }).count(),
-    240,
+    47,
   );
   assert.equal(
     await page
@@ -158,6 +161,12 @@ try {
       .first()
       .isDisabled(),
     true,
+  );
+  await page.getByRole("button", { name: "Load more titles" }).click();
+  await page.getByText("Showing 96 of 801 titles", { exact: true }).waitFor();
+  assert.equal(
+    await page.getByRole("button", { name: "View demo", exact: true }).count(),
+    95,
   );
   await page.getByRole("button", { name: "Drama series", exact: true }).click();
   await page
@@ -204,7 +213,7 @@ try {
   );
   assert.deepEqual(errors, []);
   console.log(
-    "Browser passed: owner login → draft → real upload → validation → publish → video decode; category isolation, owner demo controls, 240 labeled previews, sample episodes and mobile overflow.",
+    "Browser passed: owner login → draft → real upload → validation → publish → video decode; category isolation, owner demo controls, 800 labeled previews, sample episodes and mobile overflow.",
   );
 } finally {
   await browser.close();

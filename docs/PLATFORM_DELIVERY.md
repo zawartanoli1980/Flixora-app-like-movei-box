@@ -77,7 +77,7 @@ Restore with the API stopped: preserve the current data directory outside the se
 
 - Existing API regression suite plus real-platform tests cover permissions, exact categories, uploads, real decoding, HTTP Range responses, source path/symlink restrictions, imports/dedup/review, premium expiry/revocation, session suspension, Kids profile isolation, PIN lockout, immutable prepaid plan definitions, email verification/reset and rejection of unverified payment events.
 - Chromium end-to-end uses a temporary database/account/video and checks owner login → draft → upload → decode → review → publish → actual browser playback; category isolation and mobile horizontal overflow.
-- Optional demo mode contains 240 labeled fictional title previews and 540 sample episodes, not playable media. Real catalog metrics exclude these entries.
+- Optional demo mode contains 800 labeled fictional title previews and 1,800 sample episodes, not playable media. Real catalog metrics exclude these entries.
 
 - No successful Google login, real email delivery, charge, webhook signature validation, paid subscription, licensed distributor import, CDN stream or native-device behavior is claimed by these local tests.
 

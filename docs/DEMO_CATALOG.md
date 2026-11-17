@@ -1,6 +1,6 @@
 # Large fictional demo catalog
 
-The optional preview catalog contains **240 fictional titles**: 30 Movies, 30 Drama series, 30 Other TV series, 30 Anime, 30 Cartoons, 30 Cricket and 30 Other sports previews, plus 30 Other videos. Series contain **540 sample episodes** across two seasons each.
+The optional preview catalog contains **800 fictional titles**: 100 Movies, 100 Drama series, 100 Other TV series, 100 Anime, 100 Cartoons, 100 Cricket and 100 Other sports previews, plus 100 Other videos. Series contain **1,800 sample episodes** across two seasons each.
 
 Titles, release dates, languages, genres and episode metadata are fictional samples. Cricket/sports entries are recording concepts, never labeled as live events or furnished with fake scores. Artwork is generated locally with CSS and does not use third-party movie posters. Cards and detail dialogs explicitly identify the entries as Demo. No playable media or distribution rights are attached; direct playback requests for demo IDs are rejected by the server. Demo previews cannot create real watchlist/history records, payments or access grants.
 

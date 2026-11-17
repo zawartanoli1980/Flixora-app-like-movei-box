@@ -619,11 +619,11 @@ test("demo catalog is opt-in, idempotent and isolated from real records", async 
   assert.equal((await f.call("/admin/demo")).data.installed, false);
   const first = await f.call("/admin/demo", { action: "seed" });
   assert.equal(first.status, 200);
-  assert.equal(first.data.titleCount, 240);
-  assert.equal(first.data.episodeCount, 540);
+  assert.equal(first.data.titleCount, 800);
+  assert.equal(first.data.episodeCount, 1800);
   const catalog = (await f.call("/catalog")).data;
-  assert.equal(catalog.items.length, 240);
-  assert.equal(new Set(catalog.items.map((i) => i.id)).size, 240);
+  assert.equal(catalog.items.length, 800);
+  assert.equal(new Set(catalog.items.map((i) => i.id)).size, 800);
   assert.ok(
     catalog.items.every(
       (i) =>
@@ -644,9 +644,9 @@ test("demo catalog is opt-in, idempotent and isolated from real records", async 
   assert.equal((await f.call("/admin/overview")).data.coverage.length, 0);
   await f.call("/admin/demo", { action: "hide" });
   assert.equal((await f.call("/catalog")).data.items.length, 0);
-  assert.equal((await f.call("/admin/demo")).data.titleCount, 240);
+  assert.equal((await f.call("/admin/demo")).data.titleCount, 800);
   await f.call("/admin/demo", { action: "show" });
-  assert.equal((await f.call("/catalog")).data.items.length, 240);
+  assert.equal((await f.call("/catalog")).data.items.length, 800);
   await f.call("/admin/demo", { action: "clear" });
   assert.equal((await f.call("/catalog")).data.items.length, 0);
   assert.equal(
@@ -690,7 +690,8 @@ test("demo sections, real search filters and nested sample episodes stay consist
     "videos",
   ]) {
     const items = (await f.call("/catalog?section=" + section)).data.items;
-    assert.equal(items.length, 30);
+    assert.equal(items.length, 100);
+    assert.equal(new Set(items.map((item) => item.title)).size, 100);
     assert.ok(
       items.every(
         (item) => item.section === section && item.data.section === section,

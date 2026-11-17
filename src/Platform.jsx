@@ -70,6 +70,7 @@ function App() {
       country: "",
     }),
     [items, setItems] = useState([]),
+    [visibleCount, setVisibleCount] = useState(48),
     [demo, setDemo] = useState({ enabled: false }),
     [preview, setPreview] = useState(null),
     [error, setError] = useState(""),
@@ -108,7 +109,10 @@ function App() {
       .then(setStatus)
       .catch((e) => setError(e.message));
   }, []);
-  useEffect(refresh, [section, q, page, user, filters]);
+  useEffect(() => {
+    setVisibleCount(48);
+    refresh();
+  }, [section, q, page, user, filters]);
   useEffect(() => {
     api("/settings")
       .then(setSettings)
@@ -132,6 +136,16 @@ function App() {
       setError(e.message);
     }
   };
+  const catalogItems =
+    page === "list"
+      ? items.filter((item) =>
+          library.watchlist.some((entry) => entry.content_id === item.id),
+        )
+      : items;
+  const visibleItems =
+    page === "browse" && demo.enabled
+      ? catalogItems.slice(0, visibleCount)
+      : catalogItems;
   return (
     <div className="platform">
       <header className="topbar">
@@ -424,116 +438,106 @@ function App() {
                   <Activity size={28} />
                   <h3>Loading the library…</h3>
                 </div>
-              ) : items.filter(
-                  (i) =>
-                    page !== "list" ||
-                    library.watchlist.some((w) => w.content_id === i.id),
-                ).length ? (
+              ) : visibleItems.length ? (
                 <div className="content-grid">
-                  {items
-                    .filter(
-                      (i) =>
-                        page !== "list" ||
-                        library.watchlist.some((w) => w.content_id === i.id),
-                    )
-                    .map((i) => (
-                      <article
-                        className={`content-card ${i.demo ? "demo-card" : ""}`}
-                        key={i.id}
-                      >
-                        {i.demo ? (
-                          <DemoPoster item={i} />
-                        ) : (
-                          <div className="content-art">
-                            <img
-                              alt=""
-                              src={"/api/platform/artwork/" + i.id}
-                              onError={(e) => {
-                                e.currentTarget.style.display = "none";
-                              }}
-                            />
-                            <Clapperboard size={44} />
-                            <span>{sections[i.section]}</span>
-                          </div>
-                        )}
-                        <div className="card-body">
-                          <span className="eyebrow">
-                            {i.demo
-                              ? "DEMO · METADATA ONLY"
-                              : settings.mode === "premium" ||
-                                  (settings.mode !== "free" && i.data.premium)
-                                ? "PREMIUM"
-                                : "FREE"}{" "}
-                            · {i.data.language}
-                          </span>
-                          <h3>{i.title}</h3>
-                          <p>{i.data.description}</p>
-                          <div className="button-row">
-                            <button
-                              className="btn primary"
-                              onClick={() => {
-                                setError("");
-                                if (i.demo)
-                                  act(async () =>
-                                    setPreview(await api("/demo/" + i.id)),
-                                  );
-                                else if (i.data.kind === "series")
-                                  act(async () => {
-                                    const response = await api(
-                                      "/series/" + i.id + "/episodes",
-                                    );
-                                    setSeason(0);
-                                    setSeries({ ...i, items: response.items });
-                                  });
-                                else {
-                                  setPlaylist([]);
-                                  setPlayer(i);
-                                }
-                              }}
-                            >
-                              {i.demo ? (
-                                <Library size={15} />
-                              ) : (
-                                <Play size={15} />
-                              )}
-                              {i.demo
-                                ? "View demo"
-                                : i.data.kind === "series"
-                                  ? "Episodes"
-                                  : "Watch"}
-                            </button>
-                            <button
-                              className="icon-btn"
-                              disabled={Boolean(i.demo)}
-                              title={
-                                i.demo
-                                  ? "Demo previews do not represent playable media and cannot be saved to My list"
-                                  : undefined
-                              }
-                              aria-label={
-                                i.demo
-                                  ? "My list unavailable for demo previews"
-                                  : "Toggle My list"
-                              }
-                              onClick={() =>
-                                user
-                                  ? act(async () => {
-                                      await api("/library/" + i.id, {
-                                        listed: !library.watchlist.some(
-                                          (w) => w.content_id === i.id,
-                                        ),
-                                      });
-                                      setLibrary(await api("/library"));
-                                    })
-                                  : setLogin(true)
-                              }
-                            >
-                              <Bookmark size={18} />
-                            </button>
-                          </div>
+                  {visibleItems.map((i) => (
+                    <article
+                      className={`content-card ${i.demo ? "demo-card" : ""}`}
+                      key={i.id}
+                    >
+                      {i.demo ? (
+                        <DemoPoster item={i} />
+                      ) : (
+                        <div className="content-art">
+                          <img
+                            alt=""
+                            src={"/api/platform/artwork/" + i.id}
+                            onError={(e) => {
+                              e.currentTarget.style.display = "none";
+                            }}
+                          />
+                          <Clapperboard size={44} />
+                          <span>{sections[i.section]}</span>
                         </div>
-                      </article>
-                    ))}
+                      )}
+                      <div className="card-body">
+                        <span className="eyebrow">
+                          {i.demo
+                            ? "DEMO · METADATA ONLY"
+                            : settings.mode === "premium" ||
+                                (settings.mode !== "free" && i.data.premium)
+                              ? "PREMIUM"
+                              : "FREE"}{" "}
+                          · {i.data.language}
+                        </span>
+                        <h3>{i.title}</h3>
+                        <p>{i.data.description}</p>
+                        <div className="button-row">
+                          <button
+                            className="btn primary"
+                            onClick={() => {
+                              setError("");
+                              if (i.demo)
+                                act(async () =>
+                                  setPreview(await api("/demo/" + i.id)),
+                                );
+                              else if (i.data.kind === "series")
+                                act(async () => {
+                                  const response = await api(
+                                    "/series/" + i.id + "/episodes",
+                                  );
+                                  setSeason(0);
+                                  setSeries({ ...i, items: response.items });
+                                });
+                              else {
+                                setPlaylist([]);
+                                setPlayer(i);
+                              }
+                            }}
+                          >
+                            {i.demo ? (
+                              <Library size={15} />
+                            ) : (
+                              <Play size={15} />
+                            )}
+                            {i.demo
+                              ? "View demo"
+                              : i.data.kind === "series"
+                                ? "Episodes"
+                                : "Watch"}
+                          </button>
+                          <button
+                            className="icon-btn"
+                            disabled={Boolean(i.demo)}
+                            title={
+                              i.demo
+                                ? "Demo previews do not represent playable media and cannot be saved to My list"
+                                : undefined
+                            }
+                            aria-label={
+                              i.demo
+                                ? "My list unavailable for demo previews"
+                                : "Toggle My list"
+                            }
+                            onClick={() =>
+                              user
+                                ? act(async () => {
+                                    await api("/library/" + i.id, {
+                                      listed: !library.watchlist.some(
+                                        (w) => w.content_id === i.id,
+                                      ),
+                                    });
+                                    setLibrary(await api("/library"));
+                                  })
+                                : setLogin(true)
+                            }
+                          >
+                            <Bookmark size={18} />
+                          </button>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
                 </div>
               ) : (
                 <div className="empty-state">
@@ -565,6 +569,19 @@ function App() {
                       ? "Demo previews contain metadata only."
                       : "Real content only. No demo movies."}
                   </div>
+                </div>
+              )}
+              {!loading && visibleItems.length < catalogItems.length && (
+                <div className="catalog-tools">
+                  <p className="subtle">
+                    Showing {visibleItems.length} of {catalogItems.length} titles
+                  </p>
+                  <button
+                    className="btn secondary"
+                    onClick={() => setVisibleCount((count) => count + 48)}
+                  >
+                    Load more titles
+                  </button>
                 </div>
               )}
             </section>
@@ -2510,10 +2527,9 @@ function DemoPanel({ data, act, refresh }) {
       <section className="panel">
         <h3>Populate the design with fictional previews</h3>
         <p>
-          Add 240 fictional titles across all eight primary sections and 540
-          sample episodes. No real movie files, live streams, customer accounts,
-          financial records or viewing statistics are generated. Real uploads
-          remain separate.
+          Add fictional titles across all eight primary sections, including
+          series with sample seasons and episodes. Every preview carries a Demo
+          label and opens fictional metadata.
         </p>
         <div className="stat-grid">
           <Stat title="Demo title previews" value={data.titleCount} />
@@ -2536,7 +2552,7 @@ function DemoPanel({ data, act, refresh }) {
               })
             }
           >
-            {data.installed ? "Refresh demo catalog" : "Add 240 demo previews"}
+            {data.installed ? "Refresh demo catalog" : "Add demo previews"}
           </button>
           {data.installed && (
             <>

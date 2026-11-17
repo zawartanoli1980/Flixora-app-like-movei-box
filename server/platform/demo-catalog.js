@@ -15,7 +15,18 @@ const sectionData = {
       "Silver",
       "Forgotten",
     ],
-    nouns: ["Horizon", "Voyage", "Crossroads"],
+    nouns: [
+      "Horizon",
+      "Voyage",
+      "Crossroads",
+      "Harbor",
+      "Passage",
+      "Promise",
+      "Frontier",
+      "Echoes",
+      "Trail",
+      "Return",
+    ],
     genres: ["Adventure", "Mystery", "Drama"],
     age: 12,
     language: ["en", "ur", "hi"],
@@ -35,7 +46,18 @@ const sectionData = {
       "Meethi",
       "Rangeen",
     ],
-    nouns: ["Raah", "Dastaan", "Manzil"],
+    nouns: [
+      "Raah",
+      "Dastaan",
+      "Manzil",
+      "Yaadein",
+      "Subah",
+      "Umeed",
+      "Roshni",
+      "Shaam",
+      "Baarish",
+      "Kahani",
+    ],
     genres: ["Family", "Romance", "Drama"],
     age: 16,
     language: ["ur", "hi"],
@@ -55,7 +77,18 @@ const sectionData = {
       "Open",
       "Distant",
     ],
-    nouns: ["District", "Letters", "Station"],
+    nouns: [
+      "District",
+      "Letters",
+      "Station",
+      "Archive",
+      "Avenue",
+      "Dispatch",
+      "Theater",
+      "Hotel",
+      "Deadline",
+      "Junction",
+    ],
     genres: ["Mystery", "Drama", "Comedy"],
     age: 16,
     language: ["en", "ko", "tr"],
@@ -75,7 +108,18 @@ const sectionData = {
       "Electric",
       "Infinite",
     ],
-    nouns: ["Voyagers", "Academy", "Chronicle"],
+    nouns: [
+      "Voyagers",
+      "Academy",
+      "Chronicle",
+      "Guardians",
+      "Circuit",
+      "Fleet",
+      "Odyssey",
+      "Sanctuary",
+      "Gate",
+      "Rebellion",
+    ],
     genres: ["Fantasy", "Adventure", "Sci-Fi"],
     age: 12,
     language: ["ja", "en"],
@@ -95,7 +139,18 @@ const sectionData = {
       "Jolly",
       "Sparkly",
     ],
-    nouns: ["Meadow", "Explorers", "Workshop"],
+    nouns: [
+      "Meadow",
+      "Explorers",
+      "Workshop",
+      "Treehouse",
+      "Parade",
+      "Pals",
+      "Picnic",
+      "Clubhouse",
+      "Carnival",
+      "Gardens",
+    ],
     genres: ["Family", "Comedy", "Adventure"],
     age: 7,
     language: ["en", "ur", "hi"],
@@ -115,7 +170,18 @@ const sectionData = {
       "Outfield",
       "Pitch",
     ],
-    nouns: ["Notebook", "Practice", "Stories"],
+    nouns: [
+      "Notebook",
+      "Practice",
+      "Stories",
+      "Drills",
+      "Footwork",
+      "Sessions",
+      "Tactics",
+      "Lessons",
+      "Warmups",
+      "Review",
+    ],
     genres: ["Training", "Documentary", "Sport"],
     age: 0,
     language: ["ur", "en", "hi"],
@@ -135,7 +201,18 @@ const sectionData = {
       "Cycling",
       "Arena",
     ],
-    nouns: ["Notebook", "Practice", "Stories"],
+    nouns: [
+      "Notebook",
+      "Practice",
+      "Stories",
+      "Drills",
+      "Footwork",
+      "Sessions",
+      "Tactics",
+      "Lessons",
+      "Warmups",
+      "Review",
+    ],
     genres: ["Training", "Documentary", "Sport"],
     age: 0,
     language: ["en", "ur"],
@@ -155,7 +232,18 @@ const sectionData = {
       "Morning",
       "Nightfall",
     ],
-    nouns: ["Journal", "Sketchbook", "Notes"],
+    nouns: [
+      "Journal",
+      "Sketchbook",
+      "Notes",
+      "Guide",
+      "Walks",
+      "Projects",
+      "Diaries",
+      "Postcards",
+      "Routines",
+      "Ideas",
+    ],
     genres: ["Travel", "Learning", "Lifestyle"],
     age: 0,
     language: ["en", "ur", "hi"],
@@ -167,8 +255,14 @@ function makeCatalog() {
   const titles = [],
     episodes = [];
   let position = 0;
-  for (const [section, config] of Object.entries(sectionData))
-    for (let i = 0; i < 30; i++) {
+  for (const [section, config] of Object.entries(sectionData)) {
+    // Keep the original 30 titles and their IDs stable.
+    const titleNames = [config.nouns.slice(0, 3), config.nouns.slice(3)].flatMap(
+      (nouns) => config.adjectives.flatMap(
+        (adjective) => nouns.map((noun) => `${adjective} ${noun}`),
+      ),
+    );
+    for (const [i, title] of titleNames.entries()) {
       const id = `demo-${section}-${String(i + 1).padStart(2, "0")}`;
       const isSeries =
         ["drama", "tv"].includes(section) ||
@@ -182,7 +276,6 @@ function makeCatalog() {
           : section === "videos"
             ? "video"
             : "movie";
-      const title = `${config.adjectives[Math.floor(i / 3)]} ${config.nouns[i % 3]}`;
       const data = {
         demo: true,
         title,
@@ -231,6 +324,7 @@ function makeCatalog() {
           });
         }
     }
+  }
   return { titles, episodes };
 }
 const catalog = makeCatalog();

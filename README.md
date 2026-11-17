@@ -6,7 +6,7 @@ This is the first functional delivery stage, **not a complete production streami
 
 ## Optional large demo catalog
 
-To test the interface with sample data, sign in as owner and open **Admin → Demo catalog → Add 240 demo previews**. This adds 30 fictional title previews to each of the eight primary libraries, plus 540 sample episodes under fictional series. Every card is labeled **Demo**, its artwork is generated locally, and its button opens metadata instead of a player. No movie files, customer accounts, viewing statistics or payment records are fabricated.
+To test the interface with sample data, sign in as owner and open **Admin → Demo catalog → Add demo previews**. This adds 100 fictional title previews to each of the eight primary libraries, plus 1,800 sample episodes under fictional series. Every card is labeled **Demo**, its artwork is generated locally, and its button opens metadata instead of a player. No movie files, customer accounts, viewing statistics or payment records are fabricated.
 
 From the repository root, you can also run `npm run demo:seed`, `npm run demo:hide` or `npm run demo:clear`. Seeding is repeatable and creates no duplicates. Hiding/removing demos only affects the demo catalog; your real titles, uploads, owner login and settings remain intact. Nothing is seeded automatically during installation or startup.
 
